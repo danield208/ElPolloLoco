@@ -1,6 +1,25 @@
+@font-face {
+	font-family: "rubikbubbles";
+	src: url("font/rubikbubbles.ttf");
+}
+
 body {
+	font-family: "rubikbubbles", Arial, Helvetica, sans-serif;
 	display: flex;
+	flex-direction: column;
 	justify-content: center;
+	align-items: center;
+	height: 100vh;
+	background-image: url("img/background/desert-g97c1c6d31_1280.png");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+	margin: 0;
+}
+
+h1 {
+	font-size: 64px;
+	text-shadow: 3px 3px 7px rgba(0, 0, 0, 0.8);
 }
 
 canvas {
