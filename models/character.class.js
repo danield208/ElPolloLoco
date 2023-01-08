@@ -50,6 +50,7 @@ class Character extends MovableObject {
 	}
 
 	animate() {
+		//walk, jump and throw animations
 		setInterval(() => {
 			// this.walking_sound.pause();
 			if (this.World.keyboard.RIGHT && this.x < this.World.level.level_end_x) {
@@ -71,6 +72,7 @@ class Character extends MovableObject {
 			this.World.camera_x = -this.x + 100;
 		}, 1000 / 30);
 
+		//play character animation
 		setInterval(() => {
 			if (this.isDead()) {
 				this.playAnimation(this.IMAGES_DAED);
