@@ -14,7 +14,6 @@ window.addEventListener("keydown", (event) => {
 	if (event.code == "KeyD") keyboard.RIGHT = true;
 	if (event.code == "Space") keyboard.SPACE = true;
 	if (event.code == "KeyK") keyboard.THROW = true;
-	if (event.code == "Escape") keyboard.PAUSE = true;
 });
 
 window.addEventListener("keyup", (event) => {
@@ -24,5 +23,4 @@ window.addEventListener("keyup", (event) => {
 	if (event.code == "KeyD") keyboard.RIGHT = false;
 	if (event.code == "Space") keyboard.SPACE = false;
 	if (event.code == "KeyK") keyboard.THROW = false;
-	if (event.code == "Escape") keyboard.PAUSE = false;
 });
