@@ -1,11 +1,12 @@
 class World {
 	character = new Character();
-	level = level1;
+	level = new Level();
 	canvas;
 	ctx;
 	keyboard;
 	camera_x = 0;
 	statusBar = new StatusBar();
+	statusBar2 = [new StatusbarCoins(), new StatusbarBottles()];
 	throwableObjects = [];
 	bottlesToThrow = 20;
 	paused = false;

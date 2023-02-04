@@ -7,6 +7,12 @@ class Canvas {
 	img;
 	imageCache = {};
 	currentImage = 0;
+	instances = [
+		this instanceof Character,
+		this instanceof Chicken,
+		this instanceof Endboss,
+		this instanceof SmallChicken,
+	];
 
 	// ANCHOR variables - movable objects
 	speed = 0.4;
@@ -41,13 +47,15 @@ class Canvas {
 	}
 
 	drawHitbox() {
-		if (this instanceof Character || this instanceof Chicken || this instanceof Endboss) {
-			this.ctx.beginPath();
-			this.ctx.lineWidth = "5";
-			this.ctx.strokeStyle = "blue";
-			this.ctx.rect(this.x, this.y, this.width, this.height);
-			this.ctx.stroke();
-		}
+		this.instances.forEach((instance) => {
+			if (instance) {
+				this.ctx.beginPath();
+				this.ctx.lineWidth = "5";
+				this.ctx.strokeStyle = "blue";
+				this.ctx.rect(this.x, this.y, this.width, this.height);
+				this.ctx.stroke();
+			}
+		});
 	}
 
 	// ANCHOR movable objects
@@ -82,6 +90,15 @@ class Canvas {
 		let path = images[ind];
 		this.img = this.imageCache[path];
 		this.currentImage++;
+	}
+
+	animate(images) {
+		setInterval(() => {
+			this.playAnimation(images);
+		}, 200);
+		setInterval(() => {
+			this.moveLeft();
+		}, 1000 / 30);
 	}
 
 	jump() {

@@ -10,8 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function startGame() {
-	// level1.js
-	initLevel();
 	world = new World(canvas, keyboard);
 }
 
