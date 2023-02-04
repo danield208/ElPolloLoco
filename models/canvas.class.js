@@ -1,12 +1,57 @@
-class MovableObject extends DrawableObject {
+class Canvas {
+	// ANCHOR load canvas tag
+	canvas = document.querySelector("canvas");
+	ctx;
+
+	// ANCHOR variables - drawable objects
+	img;
+	imageCache = {};
+	currentImage = 0;
+
+	// ANCHOR variables - movable objects
 	speed = 0.4;
 	speedY = 0;
 	acceleration = 2.5;
 	energy = 100;
 	lastHit = 0;
 	otherDirection = false;
+	currentImage = 0;
 
-	applyGravity(ctx) {
+	constructor() {
+		this.ctx = this.canvas.getContext("2d");
+	}
+
+	// ANCHOR drawable objects
+	draw() {
+		this.ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+	}
+
+	loadImage(path) {
+		this.img = new Image();
+		this.img.src = path;
+	}
+
+	loadImages(arr) {
+		arr.forEach((path) => {
+			let img = new Image();
+			img.src = path;
+			img.style = "transform: scaleX(-1)";
+			this.imageCache[path] = img;
+		});
+	}
+
+	drawHitbox() {
+		if (this instanceof Character || this instanceof Chicken || this instanceof Endboss) {
+			this.ctx.beginPath();
+			this.ctx.lineWidth = "5";
+			this.ctx.strokeStyle = "blue";
+			this.ctx.rect(this.x, this.y, this.width, this.height);
+			this.ctx.stroke();
+		}
+	}
+
+	// ANCHOR movable objects
+	applyGravity() {
 		setInterval(() => {
 			if (this.isAboveGround() || this.speedY > 0) {
 				this.y -= this.speedY;
@@ -34,8 +79,6 @@ class MovableObject extends DrawableObject {
 
 	playAnimation(images) {
 		let ind = this.currentImage % images.length;
-		// let ind = 0 % 6; % = mathematischer rest => 0, Rest 0; wenn ind = 1 => 0, Rest 1
-		// i = 0, 1, 2, 3, 4, 5 und dann wieder 0. Modular greift nur das nach dem Komma auf
 		let path = images[ind];
 		this.img = this.imageCache[path];
 		this.currentImage++;

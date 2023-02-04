@@ -1,9 +1,10 @@
-class Character extends MovableObject {
+class Character extends Canvas {
 	x = 20;
+	y = 165;
 	width = 150;
 	height = 280;
 	speed = 8;
-	y = 165;
+	World;
 	IMAGES_WALKING = [
 		"../img/2_character_pepe/2_walk/W-21.png",
 		"../img/2_character_pepe/2_walk/W-22.png",
@@ -19,6 +20,7 @@ class Character extends MovableObject {
 		"../img/2_character_pepe/3_jump/J-34.png",
 		"../img/2_character_pepe/3_jump/J-35.png",
 		"../img/2_character_pepe/3_jump/J-36.png",
+		"../img/2_character_pepe/3_jump/J-37.png",
 		"../img/2_character_pepe/3_jump/J-37.png",
 		"../img/2_character_pepe/3_jump/J-38.png",
 		"../img/2_character_pepe/3_jump/J-39.png",
@@ -37,7 +39,6 @@ class Character extends MovableObject {
 		"img/2_character_pepe/4_hurt/H-42.png",
 		"img/2_character_pepe/4_hurt/H-43.png",
 	];
-	World;
 	walking_sound = new Audio("../audio/char_walking.mp3");
 
 	constructor() {
@@ -86,6 +87,6 @@ class Character extends MovableObject {
 					this.playAnimation(this.IMAGES_WALKING);
 				}
 			}
-		}, 1000 / 12);
+		}, 100);
 	}
 }

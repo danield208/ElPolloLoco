@@ -1,4 +1,4 @@
-class cloud extends MovableObject {
+class cloud extends Canvas {
 	y = 20;
 	height = 250;
 	width = 480;
@@ -10,6 +10,8 @@ class cloud extends MovableObject {
 	}
 
 	animate() {
-		this.moveLeft();
+		setInterval(() => {
+			this.moveLeft();
+		}, 1000 / 30);
 	}
 }

@@ -5,33 +5,48 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game</title>
-
-    <!-- import models -->
-    <script src="./models/drawableObject.class.js"></script>
-    <script src="./models/movable-object.class.js"></script>
-    <script src="./models/character.class.js"></script>
-    <script src="./models/chicken.class.js"></script>
-    <script src="./models/cloud.class.js"></script>
-    <script src="./models/statusbar.class.js"></script>
-    <script src="./models/world.class.js"></script>
-    <script src="./models/background-object.class.js"></script>
-    <script src="./models/keyboard.class.js"></script>
-    <script src="./models/throwableObject.class.js"></script>
-    <script src="./models/level.class.js"></script>
-    <script src="./models/endboss.class.js"></script>
-    <script src="./levels/level1.js"></script>
+    <title>EPL</title>
 
     <!-- import style -->
     <link rel="stylesheet" href="./style.css">
+
+    <!-- import models -->
+    <!-- Game -->
+    <script src="./models/input/keyboard.class.js"></script>
+    <script src="./models/game.class.js"></script>
+    <script src="./models/canvas.class.js"></script>
+    <script src="./models/startScreen.class.js"></script>
+
+    <!-- World gen -->
+    <script src="./models/world.class.js"></script>
+    <script src="./models/level.class.js"></script>
+    <script src="./levels/level1.js"></script>
+
+    <!-- Background -->
+    <script src="./models/background/cloud.class.js"></script>
+    <script src="./models/background/background-object.class.js"></script>
+
+    <!-- Character -->
+    <script src="./models/character/character.class.js"></script>
+
+    <!-- Enemies -->
+    <script src="./models/enemies/chicken.class.js"></script>
+    <script src="./models/enemies/endboss.class.js"></script>
+
+    <!-- Collectables -->
+    <script src="./models/collectables/coin.class.js"></script>
+    <script src="./models/collectables/throwableObject.class.js"></script>
+
+    <!-- Statusbars -->
+    <script src="./models/character/statusbarHealth.class.js"></script>
 </head>
 
 <body>
-    <h1>El Polo Loco</h1>
+    <h1>El Pollo Loco</h1>
     <canvas width="720px" height="480px"></canvas>
 
     <!-- import scipt -->
-    <script src="./js/game.js"></script>
+    <script src="./js/app.js"></script>
 </body>
 
 </html>

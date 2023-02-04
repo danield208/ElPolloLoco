@@ -1,4 +1,4 @@
-class Endboss extends MovableObject {
+class Endboss extends Canvas {
 	height = 400;
 	width = 200;
 	y = 50;

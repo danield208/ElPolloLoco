@@ -3,6 +3,14 @@ let level1;
 function initLevel() {
 	level1 = new level(
 		[new Chicken(), new Chicken(), new Chicken(), new Endboss()],
+		[
+			new Coin(140, 140),
+			new Coin(300, 140),
+			new Coin(450, 140),
+			new Coin(900, 140),
+			new Coin(1200, 140),
+			new Coin(1500, 140),
+		],
 		[new cloud()],
 		[
 			new BackgroundObject("../img/5_background/layers/air.png", -719, 0),
