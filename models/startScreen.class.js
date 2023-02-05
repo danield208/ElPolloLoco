@@ -1,5 +1,5 @@
 class Startscreen extends Canvas {
-	START_IMAGE = "../img/9_intro_outro_screens/start/startscreen_1.png";
+	START_IMAGE = "img/9_intro_outro_screens/start/startscreen_1.png";
 	x = 0;
 	y = 0;
 	width = 720;

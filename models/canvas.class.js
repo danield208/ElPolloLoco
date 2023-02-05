@@ -12,6 +12,7 @@ class Canvas {
 		this instanceof Chicken,
 		this instanceof Endboss,
 		this instanceof SmallChicken,
+		this instanceof Coin,
 	];
 
 	// ANCHOR variables - movable objects

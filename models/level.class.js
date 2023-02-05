@@ -10,7 +10,7 @@ class Level {
 	}
 
 	initLevel() {
-		this.setEnemies();
+		// this.setEnemies();
 		this.setCoins();
 		this.setClouds();
 		this.setBackground();

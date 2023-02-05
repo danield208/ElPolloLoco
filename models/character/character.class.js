@@ -5,6 +5,30 @@ class Character extends Canvas {
 	height = 280;
 	speed = 8;
 	World;
+	IMAGES_IDLE = [
+		"img/2_character_pepe/1_idle/idle/I-1.png",
+		"img/2_character_pepe/1_idle/idle/I-2.png",
+		"img/2_character_pepe/1_idle/idle/I-3.png",
+		"img/2_character_pepe/1_idle/idle/I-4.png",
+		"img/2_character_pepe/1_idle/idle/I-5.png",
+		"img/2_character_pepe/1_idle/idle/I-6.png",
+		"img/2_character_pepe/1_idle/idle/I-7.png",
+		"img/2_character_pepe/1_idle/idle/I-8.png",
+		"img/2_character_pepe/1_idle/idle/I-9.png",
+		"img/2_character_pepe/1_idle/idle/I-10.png",
+	];
+	IMAGES_LONGIDLE = [
+		"img/2_character_pepe/1_idle/long_idle/I-11.png",
+		"img/2_character_pepe/1_idle/long_idle/I-12.png",
+		"img/2_character_pepe/1_idle/long_idle/I-13.png",
+		"img/2_character_pepe/1_idle/long_idle/I-14.png",
+		"img/2_character_pepe/1_idle/long_idle/I-15.png",
+		"img/2_character_pepe/1_idle/long_idle/I-16.png",
+		"img/2_character_pepe/1_idle/long_idle/I-17.png",
+		"img/2_character_pepe/1_idle/long_idle/I-18.png",
+		"img/2_character_pepe/1_idle/long_idle/I-19.png",
+		"img/2_character_pepe/1_idle/long_idle/I-20.png",
+	];
 	IMAGES_WALKING = [
 		"../img/2_character_pepe/2_walk/W-21.png",
 		"../img/2_character_pepe/2_walk/W-22.png",
@@ -41,14 +65,37 @@ class Character extends Canvas {
 	];
 	walking_sound = new Audio("../audio/char_walking.mp3");
 
+	IdleAnimation = false;
+	Action = false;
+
 	constructor() {
-		super().loadImage("./img/2_character_pepe/2_walk/W-21.png");
+		super().loadImage("img/2_character_pepe/1_idle/idle/I-1.png");
+		this.loadImages(this.IMAGES_IDLE);
+		this.loadImages(this.IMAGES_LONGIDLE);
 		this.loadImages(this.IMAGES_WALKING);
 		this.loadImages(this.IMAGES_JUMPING);
 		this.loadImages(this.IMAGES_DAED);
 		this.loadImages(this.IMAGES_HURT);
+		// this.initIdle();
 		this.animate();
 		this.applyGravity();
+	}
+
+	initIdle() {
+		setInterval(() => {
+			if (!this.IdleAnimation && !this.Action) this.playIdleAnimation();
+		}, 10);
+	}
+
+	playIdleAnimation() {
+		this.IdleAnimation = true;
+		this.IMAGES_IDLE.forEach((image) => {
+			console.log("draw");
+			this.loadImage(image);
+			setTimeout(() => {
+				this.draw();
+			}, 200);
+		});
 	}
 
 	animate() {
@@ -58,6 +105,7 @@ class Character extends Canvas {
 			if (this.World.keyboard.RIGHT && this.x < this.World.level.level_end_x) {
 				this.moveRight();
 				this.otherDirection = false;
+				this.Action = true;
 				// this.walking_sound.play();
 			}
 			if (this.World.keyboard.LEFT && this.x > 0) {
@@ -78,11 +126,14 @@ class Character extends Canvas {
 		setInterval(() => {
 			if (this.isDead()) {
 				this.playAnimation(this.IMAGES_DAED);
-			} else if (this.isHurt()) {
+			}
+			if (this.isHurt()) {
 				this.playAnimation(this.IMAGES_HURT);
-			} else if (this.isAboveGround()) {
+			}
+			if (this.isAboveGround()) {
 				this.playAnimation(this.IMAGES_JUMPING);
-			} else {
+			}
+			{
 				if (this.World.keyboard.RIGHT || this.World.keyboard.LEFT) {
 					this.playAnimation(this.IMAGES_WALKING);
 				}

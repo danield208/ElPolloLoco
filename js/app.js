@@ -6,7 +6,8 @@ let gameInit;
 
 document.addEventListener("DOMContentLoaded", () => {
 	canvas = document.querySelector("canvas");
-	gameInit = new Game(canvas, keyboard);
+	// gameInit = new Game(canvas, keyboard);
+	startGame();
 });
 
 function startGame() {
