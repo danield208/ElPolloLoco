@@ -21,13 +21,6 @@ class World {
 		this.run();
 	}
 
-	checkThrowObjects() {
-		if (this.keyboard.THROW) {
-			let bottle = new ThrowableObject(this.character.x + 100, this.character.y + 100);
-			this.throwableObjects.push(bottle);
-		}
-	}
-
 	worldDraw() {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.setCameraWhileWalking();
@@ -36,6 +29,13 @@ class World {
 		requestAnimationFrame(() => {
 			this.worldDraw();
 		});
+	}
+
+	checkThrowObjects() {
+		if (this.keyboard.THROW) {
+			let bottle = new ThrowableObject(this.character.x + 100, this.character.y + 100);
+			this.throwableObjects.push(bottle);
+		}
 	}
 
 	setCameraWhileWalking() {

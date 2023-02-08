@@ -3,6 +3,9 @@ class Canvas {
 	canvas = document.querySelector("canvas");
 	ctx;
 
+	// ANCHOR Intervalls
+	Intervals = [];
+
 	// ANCHOR variables - drawable objects
 	img;
 	imageCache = {};
@@ -22,10 +25,10 @@ class Canvas {
 	energy = 100;
 	lastHit = 0;
 	otherDirection = false;
-	currentImage = 0;
 
 	constructor() {
 		this.ctx = this.canvas.getContext("2d");
+		this.applyGravity();
 	}
 
 	// ANCHOR drawable objects
@@ -61,12 +64,13 @@ class Canvas {
 
 	// ANCHOR movable objects
 	applyGravity() {
-		setInterval(() => {
-			if (this.isAboveGround() || this.speedY > 0) {
-				this.y -= this.speedY;
-				this.speedY -= this.acceleration;
-			}
-		}, 1000 / 25);
+		if (this instanceof Character)
+			setInterval(() => {
+				if (this.isAboveGround() || this.speedY > 0) {
+					this.y -= this.speedY;
+					this.speedY -= this.acceleration;
+				}
+			}, 1000 / 25);
 	}
 
 	isAboveGround() {
@@ -93,6 +97,10 @@ class Canvas {
 		this.currentImage++;
 	}
 
+	doTheThing() {
+		setTimeout(() => {}, 100);
+	}
+
 	animate(images) {
 		setInterval(() => {
 			this.playAnimation(images);
@@ -100,10 +108,6 @@ class Canvas {
 		setInterval(() => {
 			this.moveLeft();
 		}, 1000 / 30);
-	}
-
-	jump() {
-		this.speedY = 30;
 	}
 
 	isColliding(mo) {

@@ -29,7 +29,7 @@ class Game {
 			} else if (this.Keybaord.ESC) {
 				setTimeout(() => {
 					this.stopGame();
-				}, 200);
+				}, 50);
 			}
 		});
 	}
