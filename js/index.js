@@ -104,17 +104,36 @@ class Background {
 }
 
 class Enemy {
-	enemySpeed;
+	smallChicken = 50;
+	normalChicken = 80;
 
-	constructor() {
-		this.width = 80;
-		this.height = 80;
+	enemySpeed;
+	width;
+	height;
+
+	constructor(type) {
+		this.type = type;
+		this.setEnemyHeight();
+
 		this.position = {
 			x: 0,
-			y: canvas.height - mapOffset - this.height,
+			y: canvas.height - this.height - mapOffset,
 		};
 
 		this.initEnemy();
+	}
+
+	setEnemyHeight() {
+		console.log(this.type);
+		if (this.type === "small") {
+			this.width = this.smallChicken;
+			this.height = this.smallChicken;
+		}
+		if (this.type === "normal") {
+			console.log("hallo");
+			this.width = this.normalChicken;
+			this.height = this.normalChicken;
+		}
 	}
 
 	initEnemy() {
@@ -125,7 +144,7 @@ class Enemy {
 	setEnemySpawn() {
 		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
 		if (this.position.x < 1000) this.setEnemySpawn();
-		else if (this.position.x > backgroundsLayer_one[8].position.x - 100) this.setEnemySpawn();
+		else if (this.position.x > backgroundsLayer_one[8].position.x) this.setEnemySpawn();
 	}
 
 	setEnemySpeed() {
@@ -190,7 +209,14 @@ function init() {
 	];
 	airBackground = new Background({ x: 0, image: air });
 
-	enemies = [new Enemy(), new Enemy(), new Enemy(), new Enemy(), new Enemy(), new Enemy()];
+	enemies = [
+		new Enemy("normal"),
+		new Enemy("normal"),
+		new Enemy("normal"),
+		new Enemy("small"),
+		new Enemy("small"),
+		new Enemy("small"),
+	];
 
 	player = new Player();
 }
@@ -260,6 +286,12 @@ function animate() {
 	// apply gravity
 	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
 	else player.velocity.y = 0;
+
+	// check win
+	if (player.position.x > backgroundsLayer_one[8].position.x + 100) console.log("win");
+
+	// spawn boss
+	if (player.position.x > backgroundsLayer_one[8].position.x - 800) console.log("spawnBoss");
 }
 
 init();
