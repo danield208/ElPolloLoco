@@ -59,12 +59,24 @@ class Canvas {
 				this.ctx.rect(this.x, this.y, this.width, this.height);
 				this.ctx.stroke();
 			}
+			if (instance) {
+				this.ctx.beginPath();
+				this.ctx.lineWidth = "3";
+				this.ctx.strokeStyle = "red";
+				this.ctx.rect(
+					this.x + this.offset.LEFT,
+					this.y + this.offset.TOP,
+					this.width - this.offset.RIGHT,
+					this.height - this.offset.BOTTOM
+				);
+				this.ctx.stroke();
+			}
 		});
 	}
 
 	// ANCHOR movable objects
 	applyGravity() {
-		if (this instanceof Character)
+		if (this instanceof Character || this instanceof ThrowableObject)
 			setInterval(() => {
 				if (this.isAboveGround() || this.speedY > 0) {
 					this.y -= this.speedY;
@@ -111,7 +123,12 @@ class Canvas {
 	}
 
 	isColliding(mo) {
-		return this.x + this.width > mo.x && this.y + this.height > mo.y && this.x < mo.x && this.y < mo.y + mo.height;
+		return (
+			this.x + this.width - this.offset.RIGHT >= mo.x + mo.offset.LEFT &&
+			this.y + this.height - this.offset.BOTTOM >= mo.y + mo.offset.TOP &&
+			this.x + this.offset.LEFT <= mo.x + mo.width - mo.offset.RIGHT &&
+			this.y + this.offset.TOP <= mo.y + mo.height - mo.offset.BOTTOM
+		);
 	}
 
 	hit() {

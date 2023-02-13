@@ -91,10 +91,15 @@ class World {
 	}
 
 	checkCollisions() {
-		this.level.enemies.forEach((enemy) => {
-			if (this.character.isColliding(enemy)) {
-				this.character.hit();
-				this.statusBar.setPercentage(this.character.energy);
+		// this.level.enemies.forEach((enemy) => {
+		// 	if (this.character.isColliding(enemy)) {
+		// 		this.character.hit();
+		// 		this.statusBar.setPercentage(this.character.energy);
+		// 	}
+		// });
+		this.level.coins.forEach((coin) => {
+			if (this.character.isColliding(coin)) {
+				this.character.collectCoin(coin);
 			}
 		});
 	}

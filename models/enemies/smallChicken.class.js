@@ -8,6 +8,12 @@ class SmallChicken extends Canvas {
 		"img/3_enemies_chicken/chicken_small/1_walk/3_w.png",
 	];
 	IMAGE_DEAD = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
+	offset = {
+		LEFT: 20,
+		RIGHT: 20,
+		TOP: 20,
+		BOTTOM: 20,
+	};
 
 	constructor() {
 		super().loadImage("img/3_enemies_chicken/chicken_small/1_walk/1_w.png");

@@ -13,6 +13,12 @@ class Endboss extends Canvas {
 		"../img/4_enemie_boss_chicken/2_alert/G11.png",
 		"../img/4_enemie_boss_chicken/2_alert/G12.png",
 	];
+	offset = {
+		LEFT: 20,
+		RIGHT: 20,
+		TOP: 20,
+		BOTTOM: 20,
+	};
 
 	constructor() {
 		super().loadImage(this.IMAGES_WALKING[0]);

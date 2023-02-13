@@ -4,6 +4,18 @@ class Coin extends Canvas {
 	width = 80;
 	height = 80;
 	IMAGES_COIN = ["./img/8_coin/coin_1.png", "./img/8_coin/coin_2.png"];
+	// offset = {
+	// 	LEFT: 54,
+	// 	RIGHT: 54,
+	// 	TOP: 54,
+	// 	BOTTOM: 54,
+	// };
+	offset = {
+		LEFT: 0,
+		RIGHT: 0,
+		TOP: 0,
+		BOTTOM: 0,
+	};
 
 	constructor(x, y) {
 		super().loadImage("img/8_coin/coin_1.png");

@@ -29,14 +29,7 @@ class Level {
 	}
 
 	setCoins() {
-		this.coins = [
-			new Coin(140, 140),
-			new Coin(300, 140),
-			new Coin(450, 140),
-			new Coin(900, 140),
-			new Coin(1200, 140),
-			new Coin(1500, 140),
-		];
+		this.coins = [new Coin(300, 140), new Coin(450, 340), new Coin(900, 140), new Coin(1200, 140), new Coin(1500, 140)];
 	}
 
 	setClouds() {

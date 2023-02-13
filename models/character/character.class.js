@@ -1,10 +1,4 @@
 class Character extends Canvas {
-	x = 20;
-	y = 165;
-	width = 150;
-	height = 280;
-	speed = 8;
-	World;
 	IMAGES_IDLE = [
 		"img/2_character_pepe/1_idle/idle/I-1.png",
 		"img/2_character_pepe/1_idle/idle/I-2.png",
@@ -60,8 +54,24 @@ class Character extends Canvas {
 		"img/2_character_pepe/4_hurt/H-42.png",
 		"img/2_character_pepe/4_hurt/H-43.png",
 	];
-	walking_sound = new Audio("audio/char_walking.mp3");
-	Timer;
+	// offset = {
+	// 	LEFT: 72,
+	// 	RIGHT: 122,
+	// 	TOP: 138,
+	// 	BOTTOM: 155,
+	// };
+	x = 20;
+	y = 165;
+	width = 150;
+	height = 280;
+	speed = 8;
+	offset = {
+		LEFT: 28,
+		RIGHT: 70,
+		TOP: 120,
+		BOTTOM: 130,
+	};
+	// walking_sound = new Audio("audio/char_walking.mp3");
 
 	constructor() {
 		super().loadImage("img/2_character_pepe/1_idle/idle/I-1.png");
@@ -71,18 +81,20 @@ class Character extends Canvas {
 		this.loadImages(this.IMAGES_DAED);
 		this.loadImages(this.IMAGES_HURT);
 		this.characterAnimations();
+		console.log();
 	}
 
 	characterAnimations() {
 		setInterval(() => {
 			this.checkWalkDirection();
 			this.checkJump();
+			this.World.checkCollisions();
 			this.World.camera_x = -this.x + 100; //background moves with character
 		}, 30);
 
 		setInterval(() => {
 			this.characterStatusAnimation();
-		}, 100);
+		}, 130);
 	}
 
 	checkWalkDirection() {
@@ -115,5 +127,9 @@ class Character extends Canvas {
 				this.playAnimation(this.IMAGES_IDLE);
 			}
 		}
+	}
+
+	collectCoin(coin) {
+		console.log(coin);
 	}
 }
