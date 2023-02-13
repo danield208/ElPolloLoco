@@ -38,7 +38,7 @@ char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
 const char_health_100 = new Image();
 char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
 
-const mapOffset = 50;
+const mapOffset = 60;
 const gravity = 1.2;
 const keys = {
 	left: false,
@@ -48,20 +48,20 @@ const keys = {
 
 class Player {
 	constructor() {
-		this.position = {
-			x: 200,
-			y: 0,
-		};
-		this.velocity = {
-			x: 0,
-			y: 0,
-		};
 		this.width = 50;
 		this.height = 100;
 		this.speed = 8;
 		this.jumpHieght = 25;
 		this.health = 100;
 		this.CharHealthBar;
+		this.position = {
+			x: canvas.width / 2,
+			y: 0,
+		};
+		this.velocity = {
+			x: 0,
+			y: 0,
+		};
 	}
 
 	checkHealth() {
@@ -75,7 +75,7 @@ class Player {
 
 	draw() {
 		ctx.fillStyle = "red";
-		ctx.fillRect(player.position.x, player.position.y, player.width, player.height);
+		ctx.fillRect(player.position.x, player.position.y, this.width, this.height);
 		ctx.drawImage(this.CharHealthBar, 0, 0, 200, 50);
 	}
 
@@ -89,13 +89,13 @@ class Player {
 
 class Background {
 	constructor({ x, image }) {
+		this.image = image;
+		this.width = this.image.width;
+		this.height = this.image.height;
 		this.position = {
 			x: x,
 			y: 0,
 		};
-		this.image = image;
-		this.width = this.image.width;
-		this.height = this.image.height;
 	}
 
 	draw() {
@@ -103,9 +103,54 @@ class Background {
 	}
 }
 
+class Enemy {
+	enemySpeed;
+
+	constructor() {
+		this.width = 80;
+		this.height = 80;
+		this.position = {
+			x: 0,
+			y: canvas.height - mapOffset - this.height,
+		};
+
+		this.initEnemy();
+	}
+
+	initEnemy() {
+		this.setEnemySpawn();
+		this.setEnemySpeed();
+	}
+
+	setEnemySpawn() {
+		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
+		if (this.position.x < 1000) this.setEnemySpawn();
+		else if (this.position.x > backgroundsLayer_one[8].position.x - 100) this.setEnemySpawn();
+	}
+
+	setEnemySpeed() {
+		this.enemySpeed = Math.floor(Math.random() * 10);
+		if (this.enemySpeed == 0) this.initEnemy();
+		if (this.enemySpeed > 4) this.initEnemy();
+	}
+
+	draw() {
+		ctx.fillStyle = "blue";
+		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+	}
+
+	update() {
+		this.draw();
+		if (player.position.x < this.position.x) this.position.x -= this.enemySpeed;
+		else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
+	}
+}
+
 let backgroundsLayer_one = [];
 let backgroundsLayer_two = [];
 let backgroundsLayer_three = [];
+let enemies = [];
+// let clouds = [];
 let airBackground;
 let player;
 
@@ -145,6 +190,8 @@ function init() {
 	];
 	airBackground = new Background({ x: 0, image: air });
 
+	enemies = [new Enemy(), new Enemy(), new Enemy(), new Enemy(), new Enemy(), new Enemy()];
+
 	player = new Player();
 }
 
@@ -166,6 +213,10 @@ function animate() {
 
 	player.update();
 
+	enemies.forEach((enemy) => {
+		enemy.update();
+	});
+
 	// movement
 	// if (keys.left && player.position.x > 30) {
 	// 	// player.velocity.x = -player.speed;
@@ -182,6 +233,9 @@ function animate() {
 		backgroundsLayer_one.forEach((background) => {
 			background.position.x -= player.speed;
 		});
+		enemies.forEach((enemy) => {
+			enemy.position.x -= player.speed;
+		});
 	} else if (keys.left && backgroundsLayer_one[0].position.x < -50) {
 		backgroundsLayer_three.forEach((background) => {
 			background.position.x += player.speed * 0.44;
@@ -191,6 +245,9 @@ function animate() {
 		});
 		backgroundsLayer_one.forEach((background) => {
 			background.position.x += player.speed;
+		});
+		enemies.forEach((enemy) => {
+			enemy.position.x += player.speed;
 		});
 	}
 	// }
