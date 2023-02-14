@@ -49,7 +49,7 @@ const keys = {
 	space: false,
 	throw: false,
 };
-const bottleAmount = 15;
+let bottleAmount = 15;
 let timestamp = new Date().getTime();
 const timeDelay = 400;
 
@@ -98,6 +98,7 @@ class Player {
 class Bottle {
 	width = 20;
 	height = 20;
+	timestamp = 0;
 
 	constructor({ x = 0, y = canvas.height - this.height - mapOffset, thrown = false, velocityX = 0, velocityY = 0 }) {
 		this.thrown = thrown;
@@ -111,6 +112,7 @@ class Bottle {
 		};
 
 		if (!thrown) this.init();
+		else this.setTimsestamp();
 	}
 
 	init() {
@@ -121,6 +123,10 @@ class Bottle {
 		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
 		if (this.position.x < 1000) this.setBottleSpawn();
 		else if (this.position.x > backgroundsLayer_one[8].position.x - 800) this.setBottleSpawn();
+	}
+
+	setTimsestamp() {
+		this.timestamp = new Date().getTime();
 	}
 
 	draw() {
@@ -246,12 +252,14 @@ let backgroundsLayer_two = [];
 let backgroundsLayer_three = [];
 let clouds = [];
 let enemies = [];
-let coins = [];
-let bottles = [];
+let coins;
+let bottles;
 let airBackground;
 let player;
 
 function init() {
+	coins = [];
+	bottles = [];
 	backgroundsLayer_one = [
 		new Background({ x: -canvas.width, image: bgLayer1_2 }),
 		new Background({ x: 0, image: bgLayer1_1 }),
@@ -307,6 +315,9 @@ function init() {
 	player = new Player();
 }
 
+let bossStats;
+let bossHealth = 100;
+
 function animate() {
 	requestAnimationFrame(animate);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -327,8 +338,54 @@ function animate() {
 		background.draw();
 	});
 
+	enemies.forEach((enemy) => {
+		enemy.update();
+
+		if (enemy.type == "boss") enemyDamage = 2;
+		else enemyDamage = 1;
+
+		if (checkForCollision(enemy)) {
+			console.log("collision");
+			player.health -= enemyDamage;
+		}
+
+		if (checkForHeadJump(enemy) && !checkForCollision(enemy)) {
+			console.log("head jump");
+			// 8 = a bit more for a higher jump
+			player.velocity.y -= player.jumpHieght + 8;
+		}
+
+		if (enemy.type == "boss") {
+			bossStats = {
+				position: {
+					x: enemy.position.x,
+					y: enemy.position.y,
+				},
+				with: enemy.width,
+				height: enemy.height,
+			};
+		}
+	});
+
 	bottles.forEach((bottle) => {
 		bottle.update();
+		// for thrown bottle
+		if (bottle.thrown) {
+			if (bottle.position.y < canvas.height - bottle.height - mapOffset && bossSpawned) {
+				if (checkBottle_BossCollision(bottle)) {
+					// bossHealth -= 25;
+					console.log("hit");
+				}
+			}
+			if (bottle.timestamp + 2000 < new Date().getTime()) {
+				for (let index = 0; index < bottles.length; index++) {
+					if (bottles[index].position.x === bottle.position.x) {
+						bottles.splice(index, 1);
+					}
+				}
+			}
+		}
+		// player collision with normal bottle
 		if (checkForCollision(bottle) && !bottle.thrown) {
 			for (let index = 0; index < bottles.length; index++) {
 				if (bottles[index].position.x === bottle.position.x) {
@@ -345,21 +402,49 @@ function animate() {
 	ctx.font = "25px rubikbubbles";
 	ctx.fillText(player.bottles + " / " + bottleAmount, 20, 80);
 
-	enemies.forEach((enemy) => {
-		enemy.update();
-		if (enemy.type == "boss") enemyDamage = 2;
-		else enemyDamage = 1;
-		if (checkForCollision(enemy)) {
-			console.log("collision");
-			player.health -= enemyDamage;
-		}
+	// check boss health
+	if (bossHealth <= 0) {
+		console.log("won");
+	}
 
-		if (checkForHeadJump(enemy) && !checkForCollision(enemy)) {
-			console.log("head jump");
-			// 8 = a bit more for a higher jump
-			player.velocity.y -= player.jumpHieght + 8;
+	// check if jump
+	if (keys.space && player.velocity.y == 0) {
+		player.velocity.y -= player.jumpHieght;
+	}
+
+	// check if throwing
+	if (keys.throw && player.bottles > 0 && timestamp + timeDelay < new Date().getTime()) {
+		player.bottles--;
+		bottleAmount--;
+		timestamp = new Date().getTime();
+		bottles.push(
+			new Bottle({
+				thrown: true,
+				x: player.position.x + player.width,
+				y: player.position.y,
+				velocityX: 7,
+				velocityY: -20,
+			})
+		);
+	}
+
+	// check player health
+	if (player.health == 0) init();
+
+	// apply gravity
+	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
+	else player.velocity.y = 0;
+
+	// check win
+	if (player.position.x > backgroundsLayer_one[8].position.x + 100) console.log("win");
+
+	// spawn boss
+	if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
+		if (!bossSpawned) {
+			enemies.push(new Enemy("boss"));
+			bossSpawned = true;
 		}
-	});
+	}
 
 	// movement
 	// if (keys.left && player.position.x > 30) {
@@ -407,44 +492,6 @@ function animate() {
 		});
 	}
 	// }
-
-	// check if jump
-	if (keys.space && player.velocity.y == 0) {
-		player.velocity.y -= player.jumpHieght;
-	}
-
-	// check if throwing
-	if (keys.throw && player.bottles > 0 && timestamp + timeDelay < new Date().getTime()) {
-		player.bottles--;
-		timestamp = new Date().getTime();
-		bottles.push(
-			new Bottle({
-				thrown: true,
-				x: player.position.x + player.width,
-				y: player.position.y,
-				velocityX: 7,
-				velocityY: -20,
-			})
-		);
-	}
-
-	// check player health
-	if (player.health == 0) init();
-
-	// apply gravity
-	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
-	else player.velocity.y = 0;
-
-	// check win
-	if (player.position.x > backgroundsLayer_one[8].position.x + 100) console.log("win");
-
-	// spawn boss
-	if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
-		if (!bossSpawned) {
-			enemies.push(new Enemy("boss"));
-			bossSpawned = true;
-		}
-	}
 }
 
 init();
@@ -464,6 +511,16 @@ function checkForHeadJump(object) {
 		player.position.x + player.width >= object.position.x && //player right > object left
 		player.position.y + player.height + 1 > object.position.y && //player bottom > object top
 		player.position.x < object.position.x + object.width // player left < object right
+	);
+}
+
+function checkBottle_BossCollision(bottle) {
+	console.log("check");
+	return (
+		bottle.position.x + bottle.width >= bossStats.position.x && //bottle right > bossStats left
+		bottle.position.y + bottle.height - 1 > bossStats.position.y && //bottle bottom > bossStats top
+		bottle.position.x < bossStats.position.x + bossStats.width && // bottle left < bossStats right
+		bottle.position.y < bossStats.position.y + bossStats.height // player top < bossStats bottom
 	);
 }
 
