@@ -38,6 +38,9 @@ char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
 const char_health_100 = new Image();
 char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
 
+let bossSpawned = false;
+let enemyDamage;
+
 const mapOffset = 60;
 const gravity = 1.2;
 const keys = {
@@ -52,10 +55,10 @@ class Player {
 		this.height = 100;
 		this.speed = 8;
 		this.jumpHieght = 25;
-		this.health = 100;
+		this.health = 1000;
 		this.CharHealthBar;
 		this.position = {
-			x: canvas.width / 2,
+			x: canvas.width / 3,
 			y: 0,
 		};
 		this.velocity = {
@@ -65,11 +68,11 @@ class Player {
 	}
 
 	checkHealth() {
-		if (this.health == 100) this.CharHealthBar = char_health_100;
-		else if (this.health >= 80) this.CharHealthBar = char_health_80;
-		else if (this.health >= 60) this.CharHealthBar = char_health_60;
-		else if (this.health >= 40) this.CharHealthBar = char_health_40;
-		else if (this.health >= 20) this.CharHealthBar = char_health_20;
+		if (this.health == 1000) this.CharHealthBar = char_health_100;
+		else if (this.health >= 800) this.CharHealthBar = char_health_80;
+		else if (this.health >= 600) this.CharHealthBar = char_health_60;
+		else if (this.health >= 400) this.CharHealthBar = char_health_40;
+		else if (this.health >= 200) this.CharHealthBar = char_health_20;
 		else if (this.health == 0) this.CharHealthBar = char_health_0;
 	}
 
@@ -88,7 +91,7 @@ class Player {
 }
 
 class Background {
-	constructor({ x, image }) {
+	constructor({ x, image, type = "none" }) {
 		this.image = image;
 		this.width = this.image.width;
 		this.height = this.image.height;
@@ -96,16 +99,29 @@ class Background {
 			x: x,
 			y: 0,
 		};
+		if (type == "cloud") this.update();
 	}
 
 	draw() {
 		ctx.drawImage(this.image, this.position.x, this.position.y, canvas.width, canvas.height);
+	}
+
+	// cloud move speed
+	update() {
+		this.draw();
+		this.position.x -= 0.18;
 	}
 }
 
 class Enemy {
 	smallChicken = 50;
 	normalChicken = 80;
+	bossChicken = {
+		color: "orange",
+		pixel: 100,
+	};
+
+	boxColor = "blue";
 
 	enemySpeed;
 	width;
@@ -120,25 +136,34 @@ class Enemy {
 			y: canvas.height - this.height - mapOffset,
 		};
 
-		this.initEnemy();
+		if (type != "boss") this.initEnemy();
+		else this.initBoss();
 	}
 
 	setEnemyHeight() {
-		console.log(this.type);
 		if (this.type === "small") {
 			this.width = this.smallChicken;
 			this.height = this.smallChicken;
 		}
 		if (this.type === "normal") {
-			console.log("hallo");
 			this.width = this.normalChicken;
 			this.height = this.normalChicken;
+		}
+		if (this.type === "boss") {
+			this.width = this.bossChicken.pixel;
+			this.height = this.bossChicken.pixel;
+			this.boxColor = this.bossChicken.color;
 		}
 	}
 
 	initEnemy() {
 		this.setEnemySpawn();
 		this.setEnemySpeed();
+	}
+
+	initBoss() {
+		this.position.x = backgroundsLayer_one[8].position.x - 100;
+		this.enemySpeed = 2;
 	}
 
 	setEnemySpawn() {
@@ -154,7 +179,7 @@ class Enemy {
 	}
 
 	draw() {
-		ctx.fillStyle = "blue";
+		ctx.fillStyle = this.boxColor;
 		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
 	}
 
@@ -165,11 +190,41 @@ class Enemy {
 	}
 }
 
+class Bottle {
+	constructor() {
+		this.width = 20;
+		this.height = 20;
+		this.position = {
+			x: 0,
+			y: canvas.height - this.height - mapOffset,
+		};
+
+		this.init();
+	}
+
+	init() {
+		this.setBottleSpawn();
+	}
+
+	setBottleSpawn() {
+		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
+		if (this.position.x < 1000) this.setBottleSpawn();
+		else if (this.position.x > backgroundsLayer_one[8].position.x - 800) this.setBottleSpawn();
+	}
+
+	draw() {
+		ctx.fillStyle = "red";
+		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+	}
+}
+
 let backgroundsLayer_one = [];
 let backgroundsLayer_two = [];
 let backgroundsLayer_three = [];
+let clouds = [];
 let enemies = [];
-// let clouds = [];
+let coins = [];
+let bottles = [];
 let airBackground;
 let player;
 
@@ -209,14 +264,24 @@ function init() {
 	];
 	airBackground = new Background({ x: 0, image: air });
 
-	enemies = [
-		new Enemy("normal"),
-		new Enemy("normal"),
-		new Enemy("normal"),
-		new Enemy("small"),
-		new Enemy("small"),
-		new Enemy("small"),
+	clouds = [
+		new Background({ x: -canvas.width, image: clouds2, type: "cloud" }),
+		new Background({ x: 0, image: clouds1, type: "cloud" }),
+		new Background({ x: canvas.width, image: clouds2, type: "cloud" }),
+		new Background({ x: canvas.width * 2, image: clouds1, type: "cloud" }),
+		new Background({ x: canvas.width * 3, image: clouds2, type: "cloud" }),
+		new Background({ x: canvas.width * 4, image: clouds1, type: "cloud" }),
+		new Background({ x: canvas.width * 5, image: clouds2, type: "cloud" }),
+		new Background({ x: canvas.width * 6, image: clouds1, type: "cloud" }),
+		new Background({ x: canvas.width * 7, image: clouds2, type: "cloud" }),
 	];
+
+	// enemies = [new Enemy("normal")];
+
+	const bottleAmount = 10;
+	for (let i = 0; i < bottleAmount; i++) {
+		bottles.push(new Bottle());
+	}
 
 	player = new Player();
 }
@@ -226,6 +291,10 @@ function animate() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	airBackground.draw();
+
+	clouds.forEach((cloud) => {
+		cloud.update();
+	});
 
 	backgroundsLayer_three.forEach((background) => {
 		background.draw();
@@ -237,10 +306,26 @@ function animate() {
 		background.draw();
 	});
 
+	bottles.forEach((bottle) => {
+		bottle.draw();
+	});
+
 	player.update();
 
 	enemies.forEach((enemy) => {
 		enemy.update();
+		if (enemy.type == "boss") enemyDamage = 2;
+		else enemyDamage = 1;
+		if (checkForCollision(enemy)) {
+			console.log("collision");
+			player.health -= enemyDamage;
+		}
+
+		if (checkForHeadJump(enemy) && !checkForCollision(enemy)) {
+			console.log("head jump");
+			// 8 = a bit more for a higher jump
+			player.velocity.y -= player.jumpHieght + 8;
+		}
 	});
 
 	// movement
@@ -250,6 +335,9 @@ function animate() {
 	// 	// player.velocity.x = player.speed;
 	// } else {
 	if (keys.right && backgroundsLayer_one[8].position.x > 50) {
+		clouds.forEach((cloud) => {
+			cloud.position.x -= player.speed * 0.22;
+		});
 		backgroundsLayer_three.forEach((background) => {
 			background.position.x -= player.speed * 0.44;
 		});
@@ -262,7 +350,13 @@ function animate() {
 		enemies.forEach((enemy) => {
 			enemy.position.x -= player.speed;
 		});
+		bottles.forEach((bottle) => {
+			bottle.position.x -= player.speed;
+		});
 	} else if (keys.left && backgroundsLayer_one[0].position.x < -50) {
+		clouds.forEach((cloud) => {
+			cloud.position.x += player.speed * 0.22;
+		});
 		backgroundsLayer_three.forEach((background) => {
 			background.position.x += player.speed * 0.44;
 		});
@@ -275,13 +369,19 @@ function animate() {
 		enemies.forEach((enemy) => {
 			enemy.position.x += player.speed;
 		});
+		bottles.forEach((bottle) => {
+			bottle.position.x += player.speed;
+		});
 	}
 	// }
 
-	// || chicken is hit on head
+	// check if jump
 	if (keys.space && player.velocity.y == 0) {
 		player.velocity.y -= player.jumpHieght;
 	}
+
+	// check player health
+	if (player.health == 0) init();
 
 	// apply gravity
 	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
@@ -291,11 +391,33 @@ function animate() {
 	if (player.position.x > backgroundsLayer_one[8].position.x + 100) console.log("win");
 
 	// spawn boss
-	if (player.position.x > backgroundsLayer_one[8].position.x - 800) console.log("spawnBoss");
+	if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
+		if (!bossSpawned) {
+			enemies.push(new Enemy("boss"));
+			bossSpawned = true;
+		}
+	}
 }
 
 init();
 animate();
+
+function checkForCollision(object) {
+	return (
+		player.position.x + player.width >= object.position.x && //player right > object left
+		player.position.y + player.height - 1 > object.position.y && //player bottom > object top
+		player.position.x < object.position.x + object.width && // player left < object right
+		player.position.y < object.position.y + object.height // player top < object bottom
+	);
+}
+
+function checkForHeadJump(object) {
+	return (
+		player.position.x + player.width >= object.position.x && //player right > object left
+		player.position.y + player.height + 1 > object.position.y && //player bottom > object top
+		player.position.x < object.position.x + object.width // player left < object right
+	);
+}
 
 document.addEventListener("keydown", (event) => {
 	switch (event.key) {
