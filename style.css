@@ -23,6 +23,7 @@ h1 {
 }
 
 canvas {
+	position: relative;
 	background-color: black;
 	display: block;
 }

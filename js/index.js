@@ -47,9 +47,14 @@ const keys = {
 	left: false,
 	right: false,
 	space: false,
+	throw: false,
 };
+const bottleAmount = 15;
+let timestamp = new Date().getTime();
+const timeDelay = 400;
 
 class Player {
+	bottles = 0;
 	constructor() {
 		this.width = 50;
 		this.height = 100;
@@ -87,6 +92,52 @@ class Player {
 		this.draw();
 		this.position.y += this.velocity.y;
 		this.position.x += this.velocity.x;
+	}
+}
+
+class Bottle {
+	width = 20;
+	height = 20;
+
+	constructor({ x = 0, y = canvas.height - this.height - mapOffset, thrown = false, velocityX = 0, velocityY = 0 }) {
+		this.thrown = thrown;
+		this.position = {
+			x: x,
+			y: y,
+		};
+		this.velocity = {
+			x: velocityX,
+			y: velocityY,
+		};
+
+		if (!thrown) this.init();
+	}
+
+	init() {
+		this.setBottleSpawn();
+	}
+
+	setBottleSpawn() {
+		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
+		if (this.position.x < 1000) this.setBottleSpawn();
+		else if (this.position.x > backgroundsLayer_one[8].position.x - 800) this.setBottleSpawn();
+	}
+
+	draw() {
+		ctx.fillStyle = "red";
+		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+	}
+
+	update() {
+		this.draw();
+		this.position.y += this.velocity.y;
+		this.position.x += this.velocity.x;
+		if (this.position.y < canvas.height - this.height - mapOffset) {
+			this.velocity.y += gravity;
+		} else {
+			this.velocity.y = 0;
+			this.velocity.x = 0;
+		}
 	}
 }
 
@@ -190,34 +241,6 @@ class Enemy {
 	}
 }
 
-class Bottle {
-	constructor() {
-		this.width = 20;
-		this.height = 20;
-		this.position = {
-			x: 0,
-			y: canvas.height - this.height - mapOffset,
-		};
-
-		this.init();
-	}
-
-	init() {
-		this.setBottleSpawn();
-	}
-
-	setBottleSpawn() {
-		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
-		if (this.position.x < 1000) this.setBottleSpawn();
-		else if (this.position.x > backgroundsLayer_one[8].position.x - 800) this.setBottleSpawn();
-	}
-
-	draw() {
-		ctx.fillStyle = "red";
-		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
-	}
-}
-
 let backgroundsLayer_one = [];
 let backgroundsLayer_two = [];
 let backgroundsLayer_three = [];
@@ -276,11 +299,9 @@ function init() {
 		new Background({ x: canvas.width * 7, image: clouds2, type: "cloud" }),
 	];
 
-	// enemies = [new Enemy("normal")];
-
-	const bottleAmount = 10;
+	// enemies = [new Enemy("normal"), new Enemy("small")];
 	for (let i = 0; i < bottleAmount; i++) {
-		bottles.push(new Bottle());
+		bottles.push(new Bottle({}));
 	}
 
 	player = new Player();
@@ -307,10 +328,22 @@ function animate() {
 	});
 
 	bottles.forEach((bottle) => {
-		bottle.draw();
+		bottle.update();
+		if (checkForCollision(bottle) && !bottle.thrown) {
+			for (let index = 0; index < bottles.length; index++) {
+				if (bottles[index].position.x === bottle.position.x) {
+					bottles.splice(index, 1);
+					player.bottles++;
+				}
+			}
+		}
 	});
 
 	player.update();
+
+	ctx.fillStyle = "black";
+	ctx.font = "25px rubikbubbles";
+	ctx.fillText(player.bottles + " / " + bottleAmount, 20, 80);
 
 	enemies.forEach((enemy) => {
 		enemy.update();
@@ -380,6 +413,21 @@ function animate() {
 		player.velocity.y -= player.jumpHieght;
 	}
 
+	// check if throwing
+	if (keys.throw && player.bottles > 0 && timestamp + timeDelay < new Date().getTime()) {
+		player.bottles--;
+		timestamp = new Date().getTime();
+		bottles.push(
+			new Bottle({
+				thrown: true,
+				x: player.position.x + player.width,
+				y: player.position.y,
+				velocityX: 7,
+				velocityY: -20,
+			})
+		);
+	}
+
 	// check player health
 	if (player.health == 0) init();
 
@@ -424,12 +472,14 @@ document.addEventListener("keydown", (event) => {
 		case "a":
 			keys.left = true;
 			break;
-
 		case "d":
 			keys.right = true;
 			break;
 		case " ":
 			keys.space = true;
+			break;
+		case "l":
+			keys.throw = true;
 			break;
 	}
 });
@@ -439,12 +489,14 @@ document.addEventListener("keyup", (event) => {
 		case "a":
 			keys.left = false;
 			break;
-
 		case "d":
 			keys.right = false;
 			break;
 		case " ":
 			keys.space = false;
+			break;
+		case "l":
+			keys.throw = false;
 			break;
 	}
 });
