@@ -38,10 +38,85 @@ char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
 const char_health_100 = new Image();
 char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
 
+const IMAGES_IDLE = [
+	"img/2_character_pepe/1_idle/I-1.png",
+	"img/2_character_pepe/1_idle/I-2.png",
+	"img/2_character_pepe/1_idle/I-3.png",
+];
+const IMAGES_WALK = [
+	"img/2_character_pepe/2_walk/W-21.png",
+	"img/2_character_pepe/2_walk/W-22.png",
+	"img/2_character_pepe/2_walk/W-23.png",
+	"img/2_character_pepe/2_walk/W-24.png",
+	"img/2_character_pepe/2_walk/W-25.png",
+	"img/2_character_pepe/2_walk/W-26.png",
+];
+const IMAGES_JUMP = [
+	"img/2_character_pepe/3_jump/J-31.png",
+	"img/2_character_pepe/3_jump/J-32.png",
+	"img/2_character_pepe/3_jump/J-33.png",
+	"img/2_character_pepe/3_jump/J-34.png",
+	"img/2_character_pepe/3_jump/J-35.png",
+	"img/2_character_pepe/3_jump/J-36.png",
+	"img/2_character_pepe/3_jump/J-37.png",
+	"img/2_character_pepe/3_jump/J-38.png",
+	"img/2_character_pepe/3_jump/J-39.png",
+];
+const IMAGES_HURT = [
+	"img/2_character_pepe/4_hurt/H-41.png",
+	"img/2_character_pepe/4_hurt/H-42.png",
+	"img/2_character_pepe/4_hurt/H-43.png",
+];
+const IMAGES_DEAD = [
+	"img/2_character_pepe/5_dead/D-51.png",
+	"img/2_character_pepe/5_dead/D-52.png",
+	"img/2_character_pepe/5_dead/D-53.png",
+	"img/2_character_pepe/5_dead/D-54.png",
+	"img/2_character_pepe/5_dead/D-55.png",
+	"img/2_character_pepe/5_dead/D-56.png",
+	"img/2_character_pepe/5_dead/D-57.png",
+];
+
+const IMAGES_CHICKEN_NORMAL = [
+	"img/3_enemies_chicken/chicken_normal/1_walk/1_w.png",
+	"img/3_enemies_chicken/chicken_normal/1_walk/2_w.png",
+	"img/3_enemies_chicken/chicken_normal/1_walk/3_w.png",
+];
+const IMAGE_CHICKEN_NORMAL_DEAD = new Image();
+IMAGE_CHICKEN_NORMAL_DEAD.src = "img/3_enemies_chicken/chicken_normal/2_dead/dead.png";
+
+const IMAGES_CHICKEN_SMALL = [
+	"img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
+	"img/3_enemies_chicken/chicken_small/1_walk/2_w.png",
+	"img/3_enemies_chicken/chicken_small/1_walk/3_w.png",
+];
+const IMAGES_CHICKEN_SMALL_DEAD = new Image();
+IMAGES_CHICKEN_SMALL_DEAD.src = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
+
+let imageCache = {};
+function addToImageCache(imageArray) {
+	imageArray.forEach((path) => {
+		let img = new Image();
+		img.src = path;
+		imageCache[path] = img;
+	});
+}
+
+function initImageCache() {
+	addToImageCache(IMAGES_DEAD);
+	addToImageCache(IMAGES_HURT);
+	addToImageCache(IMAGES_IDLE);
+	addToImageCache(IMAGES_JUMP);
+	addToImageCache(IMAGES_WALK);
+	addToImageCache(IMAGES_CHICKEN_NORMAL);
+	addToImageCache(IMAGES_CHICKEN_SMALL);
+}
+
+initImageCache();
 let bossSpawned = false;
 let enemyDamage;
 
-const mapOffset = 60;
+const mapOffset = 50;
 const gravity = 1.2;
 const keys = {
 	left: false,
@@ -50,14 +125,24 @@ const keys = {
 	throw: false,
 };
 let bottleAmount = 15;
-let timestamp = new Date().getTime();
+let timestamp_ThrownBottle = new Date().getTime();
 const timeDelay = 400;
+
+let flippingImage = false;
+let lastPosition = "right";
+let flip = true;
 
 class Player {
 	bottles = 0;
+	currentImageCounter = 0;
+	currentImage;
+	timeDelayImage = 100;
+	timestamp_Framerate = new Date().getTime();
+	currentAnimationArray = IMAGES_IDLE;
+
 	constructor() {
-		this.width = 50;
-		this.height = 100;
+		this.width = 100;
+		this.height = 250;
 		this.speed = 8;
 		this.jumpHieght = 25;
 		this.health = 1000;
@@ -70,6 +155,13 @@ class Player {
 			x: 0,
 			y: 0,
 		};
+
+		this.loadSingleImage("img/2_character_pepe/5_dead/D-51.png");
+	}
+
+	loadSingleImage(path) {
+		this.currentImage = new Image();
+		this.currentImage.src = path;
 	}
 
 	checkHealth() {
@@ -81,9 +173,27 @@ class Player {
 		else if (this.health == 0) this.CharHealthBar = char_health_0;
 	}
 
+	playAnimation(images) {
+		let index = this.currentImageCounter % images.length;
+		let path = images[index];
+		this.currentImage = imageCache[path];
+		this.currentImageCounter++;
+	}
+
 	draw() {
-		ctx.fillStyle = "red";
-		ctx.fillRect(player.position.x, player.position.y, this.width, this.height);
+		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
+			this.playAnimation(this.currentAnimationArray);
+			this.timestamp_Framerate = new Date().getTime();
+		}
+		if (lastPosition === "left") {
+			// ANCHOR kein plan was hier passiert
+			ctx.save();
+			ctx.scale(-1, 1);
+			ctx.drawImage(this.currentImage, this.position.x * -1 - this.width, this.position.y, this.width, this.height);
+			ctx.restore();
+		} else {
+			ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
+		}
 		ctx.drawImage(this.CharHealthBar, 0, 0, 200, 50);
 	}
 
@@ -184,6 +294,12 @@ class Enemy {
 	width;
 	height;
 
+	currentAnimationArray = IMAGES_CHICKEN_NORMAL;
+	currentImageCounter = 0;
+	currentImage;
+	timeDelayImage = 100;
+	timestamp_Framerate = new Date().getTime();
+
 	constructor(type) {
 		this.type = type;
 		this.setEnemyHeight();
@@ -195,6 +311,13 @@ class Enemy {
 
 		if (type != "boss") this.initEnemy();
 		else this.initBoss();
+
+		this.loadSingleImage("img/2_character_pepe/5_dead/D-51.png");
+	}
+
+	loadSingleImage(path) {
+		this.currentImage = new Image();
+		this.currentImage.src = path;
 	}
 
 	setEnemyHeight() {
@@ -225,8 +348,13 @@ class Enemy {
 
 	setEnemySpawn() {
 		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
-		if (this.position.x < 1000) this.setEnemySpawn();
-		else if (this.position.x > backgroundsLayer_one[8].position.x) this.setEnemySpawn();
+		if (this.position.x < 1000) {
+			this.setEnemySpawn();
+			return;
+		} else if (this.position.x > backgroundsLayer_one[8].position.x) {
+			this.setEnemySpawn();
+			return;
+		}
 	}
 
 	setEnemySpeed() {
@@ -235,9 +363,31 @@ class Enemy {
 		if (this.enemySpeed > 4) this.initEnemy();
 	}
 
+	playAnimation(images) {
+		let index = this.currentImageCounter % images.length;
+		let path = images[index];
+		this.currentImage = imageCache[path];
+		this.currentImageCounter++;
+	}
+
 	draw() {
-		ctx.fillStyle = this.boxColor;
-		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+		if (this.type === "normal") this.currentAnimationArray = IMAGES_CHICKEN_NORMAL;
+		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
+
+		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
+			this.playAnimation(this.currentAnimationArray);
+			this.timestamp_Framerate = new Date().getTime();
+		}
+
+		if (player.position.x > this.position.x) {
+			// ANCHOR kein plan was hier passiert
+			ctx.save();
+			ctx.scale(-1, 1);
+			ctx.drawImage(this.currentImage, this.position.x * -1 - this.width, this.position.y, this.width, this.height);
+			ctx.restore();
+		} else {
+			ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
+		}
 	}
 
 	update() {
@@ -256,6 +406,8 @@ let coins;
 let bottles;
 let airBackground;
 let player;
+let doesObjectHitEnemy = false;
+let playerJumping = false;
 
 function init() {
 	coins = [];
@@ -307,12 +459,32 @@ function init() {
 		new Background({ x: canvas.width * 7, image: clouds2, type: "cloud" }),
 	];
 
-	// enemies = [new Enemy("normal"), new Enemy("small")];
 	for (let i = 0; i < bottleAmount; i++) {
 		bottles.push(new Bottle({}));
 	}
 
 	player = new Player();
+	enemies = [];
+
+	let amount;
+	function randomChickenSpawn() {
+		amount = Math.floor(Math.random() * 13);
+		if (amount <= 5) {
+			randomChickenSpawn();
+			return;
+		}
+		for (let i = 0; i < amount; i++) {
+			const chickentype = setType();
+			enemies.push(new Enemy(chickentype));
+		}
+	}
+
+	randomChickenSpawn();
+
+	function setType() {
+		if (Math.random() < 0.5) return "normal";
+		else return "small";
+	}
 }
 
 let bossStats;
@@ -345,14 +517,16 @@ function animate() {
 		else enemyDamage = 1;
 
 		if (checkForCollision(enemy)) {
-			console.log("collision");
-			player.health -= enemyDamage;
-		}
-
-		if (checkForHeadJump(enemy) && !checkForCollision(enemy)) {
-			console.log("head jump");
-			// 8 = a bit more for a higher jump
-			player.velocity.y -= player.jumpHieght + 8;
+			// player.health -= enemyDamage;
+			if (player.velocity.y > 0 && playerJumping) {
+				console.log("head jump");
+				playerJumping = false;
+				for (let index = 0; index < enemies.length; index++) {
+					if (enemies[index].position.x === enemy.position.x) {
+						enemies.splice(index, 1);
+					}
+				}
+			}
 		}
 
 		if (enemy.type == "boss") {
@@ -361,7 +535,7 @@ function animate() {
 					x: enemy.position.x,
 					y: enemy.position.y,
 				},
-				with: enemy.width,
+				width: enemy.width,
 				height: enemy.height,
 			};
 		}
@@ -373,9 +547,11 @@ function animate() {
 		if (bottle.thrown) {
 			if (bottle.position.y < canvas.height - bottle.height - mapOffset && bossSpawned) {
 				if (checkBottle_BossCollision(bottle)) {
-					// bossHealth -= 25;
-					console.log("hit");
-				}
+					if (!doesObjectHitEnemy) {
+						bossHealth -= 25;
+						doesObjectHitEnemy = true;
+					}
+				} else doesObjectHitEnemy = false;
 			}
 			if (bottle.timestamp + 2000 < new Date().getTime()) {
 				for (let index = 0; index < bottles.length; index++) {
@@ -402,21 +578,17 @@ function animate() {
 	ctx.font = "25px rubikbubbles";
 	ctx.fillText(player.bottles + " / " + bottleAmount, 20, 80);
 
-	// check boss health
-	if (bossHealth <= 0) {
-		console.log("won");
-	}
-
 	// check if jump
 	if (keys.space && player.velocity.y == 0) {
 		player.velocity.y -= player.jumpHieght;
+		playerJumping = true;
 	}
 
 	// check if throwing
-	if (keys.throw && player.bottles > 0 && timestamp + timeDelay < new Date().getTime()) {
+	if (keys.throw && player.bottles > 0 && timestamp_ThrownBottle + timeDelay < new Date().getTime()) {
 		player.bottles--;
 		bottleAmount--;
-		timestamp = new Date().getTime();
+		timestamp_ThrownBottle = new Date().getTime();
 		bottles.push(
 			new Bottle({
 				thrown: true,
@@ -436,7 +608,7 @@ function animate() {
 	else player.velocity.y = 0;
 
 	// check win
-	if (player.position.x > backgroundsLayer_one[8].position.x + 100) console.log("win");
+	if (bossHealth == 0) console.log("win");
 
 	// spawn boss
 	if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
@@ -446,12 +618,6 @@ function animate() {
 		}
 	}
 
-	// movement
-	// if (keys.left && player.position.x > 30) {
-	// 	// player.velocity.x = -player.speed;
-	// } else if (keys.right && player.position.x + player.width < 150) {
-	// 	// player.velocity.x = player.speed;
-	// } else {
 	if (keys.right && backgroundsLayer_one[8].position.x > 50) {
 		clouds.forEach((cloud) => {
 			cloud.position.x -= player.speed * 0.22;
@@ -471,6 +637,8 @@ function animate() {
 		bottles.forEach((bottle) => {
 			bottle.position.x -= player.speed;
 		});
+		lastPosition = "right";
+		player.currentAnimationArray = IMAGES_WALK;
 	} else if (keys.left && backgroundsLayer_one[0].position.x < -50) {
 		clouds.forEach((cloud) => {
 			cloud.position.x += player.speed * 0.22;
@@ -490,8 +658,10 @@ function animate() {
 		bottles.forEach((bottle) => {
 			bottle.position.x += player.speed;
 		});
-	}
-	// }
+		lastPosition = "left";
+		flippingImage = true;
+		player.currentAnimationArray = IMAGES_WALK;
+	} else player.currentAnimationArray = IMAGES_IDLE;
 }
 
 init();
@@ -500,22 +670,13 @@ animate();
 function checkForCollision(object) {
 	return (
 		player.position.x + player.width >= object.position.x && //player right > object left
-		player.position.y + player.height - 1 > object.position.y && //player bottom > object top
+		player.position.y + player.height > object.position.y && //player bottom > object top
 		player.position.x < object.position.x + object.width && // player left < object right
 		player.position.y < object.position.y + object.height // player top < object bottom
 	);
 }
 
-function checkForHeadJump(object) {
-	return (
-		player.position.x + player.width >= object.position.x && //player right > object left
-		player.position.y + player.height + 1 > object.position.y && //player bottom > object top
-		player.position.x < object.position.x + object.width // player left < object right
-	);
-}
-
 function checkBottle_BossCollision(bottle) {
-	console.log("check");
 	return (
 		bottle.position.x + bottle.width >= bossStats.position.x && //bottle right > bossStats left
 		bottle.position.y + bottle.height - 1 > bossStats.position.y && //bottle bottom > bossStats top
