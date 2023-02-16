@@ -23,6 +23,8 @@ clouds1.src = "img/5_background/layers/4_clouds/1.png";
 const clouds2 = new Image();
 clouds2.src = "img/5_background/layers/4_clouds/2.png";
 
+//
+
 // statusbar
 // character
 const char_health_0 = new Image();
@@ -37,6 +39,7 @@ const char_health_80 = new Image();
 char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
 const char_health_100 = new Image();
 char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
+// boss
 
 const IMAGES_IDLE = [
 	"img/2_character_pepe/1_idle/I-1.png",
@@ -93,6 +96,25 @@ const IMAGES_CHICKEN_SMALL = [
 const IMAGES_CHICKEN_SMALL_DEAD = new Image();
 IMAGES_CHICKEN_SMALL_DEAD.src = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
 
+const IMAGES_BOSS_WALK = [
+	"img/4_enemie_boss_chicken/1_walk/G1.png",
+	"img/4_enemie_boss_chicken/1_walk/G2.png",
+	"img/4_enemie_boss_chicken/1_walk/G3.png",
+	"img/4_enemie_boss_chicken/1_walk/G4.png",
+];
+
+const IMAGES_BOSS_HURT = [
+	"img/4_enemie_boss_chicken/4_hurt/G21.png",
+	"img/4_enemie_boss_chicken/4_hurt/G22.png",
+	"img/4_enemie_boss_chicken/4_hurt/G23.png",
+];
+
+const IMAGES_BOSS_DEAD = [
+	"img/4_enemie_boss_chicken/5_dead/G24.png",
+	"img/4_enemie_boss_chicken/5_dead/G25.png",
+	"img/4_enemie_boss_chicken/5_dead/G26.png",
+];
+
 let imageCache = {};
 function addToImageCache(imageArray) {
 	imageArray.forEach((path) => {
@@ -110,35 +132,64 @@ function initImageCache() {
 	addToImageCache(IMAGES_WALK);
 	addToImageCache(IMAGES_CHICKEN_NORMAL);
 	addToImageCache(IMAGES_CHICKEN_SMALL);
+	addToImageCache(IMAGES_BOSS_WALK);
+	addToImageCache(IMAGES_BOSS_HURT);
+	addToImageCache(IMAGES_BOSS_DEAD);
 }
 
 initImageCache();
-let bossSpawned = false;
-let enemyDamage;
 
-const mapOffset = 50;
+// in init()
+// Arrays
+let coins;
+let clouds;
+let enemies;
+let bottles;
+let backgroundsLayer_one;
+let backgroundsLayer_two;
+let backgroundsLayer_three;
+
+// strings
+let lastPosition;
+
+// number with new Date()
+let timestamp_ThrownBottle;
+
+let bossStats;
+let bossHealth;
+
+let player;
+let airBackground;
+
+// numbers
+let enemyDamage;
 const gravity = 1.2;
+const mapOffset = 50;
+let bottleAmount = 15;
+const timeDelay = 400;
+
+// booleans
 const keys = {
 	left: false,
 	right: false,
 	space: false,
 	throw: false,
 };
-let bottleAmount = 15;
-let timestamp_ThrownBottle = new Date().getTime();
-const timeDelay = 400;
-
-let flippingImage = false;
-let lastPosition = "right";
-let flip = true;
+let flip;
+let bossSpawned;
+let flippingImage;
+let playerJumping;
+let doesObjectHitEnemy;
 
 class Player {
 	bottles = 0;
-	currentImageCounter = 0;
+
+	// for image generation
 	currentImage;
 	timeDelayImage = 100;
-	timestamp_Framerate = new Date().getTime();
+	currentImageCounter = 0;
 	currentAnimationArray = IMAGES_IDLE;
+	timestamp_Framerate = new Date().getTime();
 
 	constructor() {
 		this.width = 100;
@@ -156,7 +207,7 @@ class Player {
 			y: 0,
 		};
 
-		this.loadSingleImage("img/2_character_pepe/5_dead/D-51.png");
+		this.loadSingleImage("img/2_character_pepe/1_idle/I-1.png");
 	}
 
 	loadSingleImage(path) {
@@ -281,24 +332,19 @@ class Background {
 }
 
 class Enemy {
-	smallChicken = 50;
-	normalChicken = 80;
-	bossChicken = {
-		color: "orange",
-		pixel: 100,
-	};
-
-	boxColor = "blue";
-
-	enemySpeed;
 	width;
 	height;
+	enemySpeed;
+	bossChicken = 300;
+	smallChicken = 50;
+	normalChicken = 80;
 
-	currentAnimationArray = IMAGES_CHICKEN_NORMAL;
-	currentImageCounter = 0;
+	// for image generation
 	currentImage;
 	timeDelayImage = 100;
+	currentImageCounter = 0;
 	timestamp_Framerate = new Date().getTime();
+	currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 
 	constructor(type) {
 		this.type = type;
@@ -312,7 +358,7 @@ class Enemy {
 		if (type != "boss") this.initEnemy();
 		else this.initBoss();
 
-		this.loadSingleImage("img/2_character_pepe/5_dead/D-51.png");
+		this.loadSingleImage("img/3_enemies_chicken/chicken_normal/1_walk/1_w.png");
 	}
 
 	loadSingleImage(path) {
@@ -330,9 +376,8 @@ class Enemy {
 			this.height = this.normalChicken;
 		}
 		if (this.type === "boss") {
-			this.width = this.bossChicken.pixel;
-			this.height = this.bossChicken.pixel;
-			this.boxColor = this.bossChicken.color;
+			this.width = this.bossChicken;
+			this.height = this.bossChicken;
 		}
 	}
 
@@ -373,6 +418,7 @@ class Enemy {
 	draw() {
 		if (this.type === "normal") this.currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
+		if (this.type === "boss") this.currentAnimationArray = IMAGES_BOSS_WALK;
 
 		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 			this.playAnimation(this.currentAnimationArray);
@@ -397,21 +443,33 @@ class Enemy {
 	}
 }
 
-let backgroundsLayer_one = [];
-let backgroundsLayer_two = [];
-let backgroundsLayer_three = [];
-let clouds = [];
-let enemies = [];
-let coins;
-let bottles;
-let airBackground;
-let player;
-let doesObjectHitEnemy = false;
-let playerJumping = false;
+class Coin {
+	constructor() {}
+}
 
 function init() {
+	// init arrays
 	coins = [];
+	clouds = [];
+	enemies = [];
 	bottles = [];
+	backgroundsLayer_one = [];
+	backgroundsLayer_two = [];
+	backgroundsLayer_three = [];
+
+	// set default values
+	bossHealth = 100;
+	bottleAmount = 15;
+	timestamp_ThrownBottle = new Date().getTime();
+
+	flip = true;
+	bossSpawned = false;
+	flippingImage = false;
+
+	lastPosition = "right";
+	playerJumping = false;
+	doesObjectHitEnemy = false;
+
 	backgroundsLayer_one = [
 		new Background({ x: -canvas.width, image: bgLayer1_2 }),
 		new Background({ x: 0, image: bgLayer1_1 }),
@@ -485,10 +543,9 @@ function init() {
 		if (Math.random() < 0.5) return "normal";
 		else return "small";
 	}
-}
 
-let bossStats;
-let bossHealth = 100;
+	animate();
+}
 
 function animate() {
 	requestAnimationFrame(animate);
@@ -523,8 +580,17 @@ function animate() {
 				playerJumping = false;
 				for (let index = 0; index < enemies.length; index++) {
 					if (enemies[index].position.x === enemy.position.x) {
-						enemies.splice(index, 1);
+						if (enemy.type !== "boss") enemies.splice(index, 1);
 					}
+				}
+			}
+		}
+
+		// check for boos health
+		if (enemy.type == "boss" && bossHealth == 0) {
+			for (let index = 0; index < enemies.length; index++) {
+				if (enemies[index].type === "boss") {
+					enemies.splice(index, 1);
 				}
 			}
 		}
@@ -581,6 +647,9 @@ function animate() {
 	// check if jump
 	if (keys.space && player.velocity.y == 0) {
 		player.velocity.y -= player.jumpHieght;
+		player.timeDelayImage = 70;
+		player.currentImageCounter = 0;
+		player.currentAnimationArray = IMAGES_JUMP;
 		playerJumping = true;
 	}
 
@@ -601,14 +670,25 @@ function animate() {
 	}
 
 	// check player health
-	if (player.health == 0) init();
+	if (player.health == 0)
+		setTimeout(() => {
+			init();
+		}, 200);
 
 	// apply gravity
 	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
 	else player.velocity.y = 0;
 
+	// set player.timeDelay back to default after jumping
+	if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
+		player.timeDelayImage = 100;
+	}
+
 	// check win
-	if (bossHealth == 0) console.log("win");
+	if (bossHealth == 0)
+		setTimeout(() => {
+			init();
+		}, 200);
 
 	// spawn boss
 	if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
@@ -638,7 +718,9 @@ function animate() {
 			bottle.position.x -= player.speed;
 		});
 		lastPosition = "right";
-		player.currentAnimationArray = IMAGES_WALK;
+		if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
+			player.currentAnimationArray = IMAGES_WALK;
+		}
 	} else if (keys.left && backgroundsLayer_one[0].position.x < -50) {
 		clouds.forEach((cloud) => {
 			cloud.position.x += player.speed * 0.22;
@@ -660,12 +742,12 @@ function animate() {
 		});
 		lastPosition = "left";
 		flippingImage = true;
-		player.currentAnimationArray = IMAGES_WALK;
-	} else player.currentAnimationArray = IMAGES_IDLE;
+		if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
+			player.currentAnimationArray = IMAGES_WALK;
+		}
+	} else if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset)
+		player.currentAnimationArray = IMAGES_IDLE;
 }
-
-init();
-animate();
 
 function checkForCollision(object) {
 	return (
@@ -718,3 +800,5 @@ document.addEventListener("keyup", (event) => {
 			break;
 	}
 });
+
+init();
