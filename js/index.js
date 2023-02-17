@@ -278,12 +278,14 @@ let flip;
 let bossSpawned;
 let flippingImage;
 let playerJumping;
+let stopAnimation;
 let doesObjectHitEnemy;
 
 class Player {
 	bottles = 0;
 	coins = 0;
-	InitDead = false;
+	InitDead = true;
+	playerDead = false;
 
 	offset = {
 		left: 17,
@@ -364,7 +366,7 @@ class Player {
 	}
 
 	update() {
-		if (player.health != 0) {
+		if (!player.playerDead) {
 			this.checkHealth();
 			this.draw();
 			this.position.y += this.velocity.y;
@@ -377,6 +379,8 @@ class Player {
 			this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
 		} else {
 			if (this.timestamp_StopDeadAnimation + 700 <= new Date().getTime()) {
+				console.log("loaded");
+				stopAnimation = true;
 				this.currentImage = GameOver;
 				ctx.drawImage(this.currentImage, 0, 0, canvas.width, canvas.height);
 				PressButton = true;
@@ -806,6 +810,7 @@ function init() {
 	bossHit = false;
 	bossSpawned = false;
 	flippingImage = false;
+	stopAnimation = false;
 
 	lastPosition = "right";
 	playerJumping = false;
@@ -900,7 +905,7 @@ function init() {
 }
 
 function animate() {
-	if (player.health != 0) {
+	if (!stopAnimation) {
 		requestAnimationFrame(animate);
 	}
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -929,7 +934,7 @@ function animate() {
 
 		if (enemy.type != "boss") {
 			if (checkForCollision(enemy)) {
-				// player.health -= enemyDamage;
+				player.health -= enemyDamage;
 				if (enemy.status == "dead") enemy.killInit = true;
 				if (player.velocity.y > 0 && playerJumping && enemy.status != "dead") {
 					enemy.status = "dead";
@@ -982,15 +987,16 @@ function animate() {
 	player.update();
 
 	if (
-		player.health == 0 &&
-		player.IinitDead == true &&
-		(player.health == 0 ||
+		player.InitDead &&
+		(player.health <= 0 ||
 			(bottleAmount == 3 && bossHealth != 75) ||
 			(bottleAmount == 2 && bossHealth != 50) ||
 			(bottleAmount == 1 && bossHealth != 25) ||
 			bottleAmount == 0)
 	) {
+		console.log("jo");
 		player.InitDead = false;
+		player.playerDead = true;
 		player.timestamp_StopDeadAnimation = new Date().getTime();
 	}
 
@@ -1053,18 +1059,6 @@ function animate() {
 			);
 		}
 	}
-
-	// check player health
-	if (
-		player.health == 0 ||
-		(bottleAmount == 3 && bossHealth != 75) ||
-		(bottleAmount == 2 && bossHealth != 50) ||
-		(bottleAmount == 1 && bossHealth != 25) ||
-		bottleAmount == 0
-	)
-		setTimeout(() => {
-			player.InitDead = true;
-		}, 200);
 
 	// apply gravity
 	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
