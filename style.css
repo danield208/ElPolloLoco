@@ -3,6 +3,14 @@
 	src: url("font/rubikbubbles.ttf");
 }
 
+/* prevents user from selecting text if double clicking */
+* {
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+}
+
 body {
 	font-family: "rubikbubbles", Arial, Helvetica, sans-serif;
 	display: flex;

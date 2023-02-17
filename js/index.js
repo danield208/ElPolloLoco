@@ -23,7 +23,24 @@ clouds1.src = "img/5_background/layers/4_clouds/1.png";
 const clouds2 = new Image();
 clouds2.src = "img/5_background/layers/4_clouds/2.png";
 
-//
+// intro, outro, win, lose
+const GameOver = new Image();
+GameOver.src = "img/9_intro_outro_screens/GameOver.png";
+const Startscreen = new Image();
+Startscreen.src = "img/9_intro_outro_screens/Startscreen.png";
+const YouWin = new Image();
+YouWin.src = "img/9_intro_outro_screens/YouWin.png";
+
+// buttons
+const StartButton = new Image();
+StartButton.src = "img/buttons/Start.png";
+
+// icons
+const CoinIcon = new Image();
+CoinIcon.src = "img/7_statusbars/3_icons/icon_coin.png";
+
+const BottleIcon = new Image();
+BottleIcon.src = "img/7_statusbars/3_icons/icon_salsa_bottle.png";
 
 // statusbar
 // character
@@ -39,7 +56,6 @@ const char_health_80 = new Image();
 char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
 const char_health_100 = new Image();
 char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
-// boss
 
 const IMAGES_IDLE = [
 	"img/2_character_pepe/1_idle/I-1.png",
@@ -115,14 +131,9 @@ const IMAGES_BOSS_DEAD = [
 	"img/4_enemie_boss_chicken/5_dead/G26.png",
 ];
 
+const IMAGES_COIN = ["img/8_coin/coin_1.png", "img/8_coin/coin_2.png"];
+
 let imageCache = {};
-function addToImageCache(imageArray) {
-	imageArray.forEach((path) => {
-		let img = new Image();
-		img.src = path;
-		imageCache[path] = img;
-	});
-}
 
 function initImageCache() {
 	addToImageCache(IMAGES_DEAD);
@@ -135,16 +146,64 @@ function initImageCache() {
 	addToImageCache(IMAGES_BOSS_WALK);
 	addToImageCache(IMAGES_BOSS_HURT);
 	addToImageCache(IMAGES_BOSS_DEAD);
+	addToImageCache(IMAGES_COIN);
 }
 
+function addToImageCache(imageArray) {
+	imageArray.forEach((path) => {
+		let img = new Image();
+		img.src = path;
+		imageCache[path] = img;
+	});
+}
 initImageCache();
+
+let StartButtonWidth = StartButton.width / 2;
+let StartButtonHeight = StartButton.height / 2;
+let StartButtonPositionX = canvas.width / 2 - StartButtonWidth / 2;
+let StartButtonPositionY = canvas.height / 7 - StartButtonHeight / 2;
+
+function initStartscreen() {
+	loadSingleImage(Startscreen);
+	ctx.drawImage(Startscreen, 0, 0, canvas.width, canvas.height);
+	ctx.drawImage(StartButton, StartButtonPositionX, StartButtonPositionY, StartButtonWidth, StartButtonHeight);
+	ctx.fillStyle = "red";
+}
+
+// setTimeout(() => {
+// 	initStartscreen();
+// }, 200);
+
+let clickX;
+let clickY;
+
+canvas.addEventListener("click", (event) => {
+	const rect = canvas.getBoundingClientRect();
+	clickX = event.clientX - rect.left;
+	clickY = event.clientY - rect.top;
+	if (checkForButton()) {
+		init();
+	}
+	clickX = 0;
+	clickY = 0;
+});
+
+function checkForButton() {
+	return (
+		clickX > StartButtonPositionX && // clickX > picture left
+		clickX < StartButtonPositionX + StartButtonWidth && // clickX < picture right
+		clickY > StartButtonPositionY && // clixkY > picture top
+		clickY < StartButtonPositionY + StartButtonHeight // clickY < picture bottom
+	);
+}
 
 // in init()
 // Arrays
-let coins;
 let clouds;
 let enemies;
 let bottles;
+let coinsArray;
+let killedEnemy;
 let backgroundsLayer_one;
 let backgroundsLayer_two;
 let backgroundsLayer_three;
@@ -175,6 +234,7 @@ const keys = {
 	space: false,
 	throw: false,
 };
+let bossHit;
 let flip;
 let bossSpawned;
 let flippingImage;
@@ -183,6 +243,7 @@ let doesObjectHitEnemy;
 
 class Player {
 	bottles = 0;
+	coins = 0;
 
 	// for image generation
 	currentImage;
@@ -332,8 +393,11 @@ class Background {
 }
 
 class Enemy {
+	id;
 	width;
 	height;
+	status = "alive";
+	killInit = false;
 	enemySpeed;
 	bossChicken = 300;
 	smallChicken = 50;
@@ -347,6 +411,7 @@ class Enemy {
 	currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 
 	constructor(type) {
+		this.id = Math.random();
 		this.type = type;
 		this.setEnemyHeight();
 
@@ -418,14 +483,31 @@ class Enemy {
 	draw() {
 		if (this.type === "normal") this.currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
-		if (this.type === "boss") this.currentAnimationArray = IMAGES_BOSS_WALK;
+		if (this.type === "boss" && bossHealth != 0 && !bossHit) {
+			this.currentAnimationArray = IMAGES_BOSS_WALK;
+		} else if (bossHit) {
+			this.currentAnimationArray = IMAGES_BOSS_HURT;
+		} else if (bossHealth == 0) this.currentAnimationArray = IMAGES_BOSS_DEAD;
 
-		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
-			this.playAnimation(this.currentAnimationArray);
-			this.timestamp_Framerate = new Date().getTime();
+		if (this.type != "boos") {
+			if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime() && this.status != "dead") {
+				this.playAnimation(this.currentAnimationArray);
+				this.timestamp_Framerate = new Date().getTime();
+			} else if (this.status == "dead") {
+				if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
+				if (this.type == "small") this.currentImage = IMAGES_CHICKEN_SMALL_DEAD;
+			}
+		} else {
+			if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
+				this.playAnimation(this.currentAnimationArray);
+				this.timestamp_Framerate = new Date().getTime();
+			}
+			// else if (bossHealth == 0) {
+			// 	if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
+			// }
 		}
 
-		if (player.position.x > this.position.x) {
+		if (player.position.x > this.position.x && this.status != "dead") {
 			// ANCHOR kein plan was hier passiert
 			ctx.save();
 			ctx.scale(-1, 1);
@@ -438,21 +520,86 @@ class Enemy {
 
 	update() {
 		this.draw();
-		if (player.position.x < this.position.x) this.position.x -= this.enemySpeed;
-		else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
+		if (this.status != "dead") {
+			if (player.position.x < this.position.x) this.position.x -= this.enemySpeed;
+			else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
+		} else if (this.status == "dead") {
+			let index = enemies.findIndex((enemy) => {
+				return enemy.id === this.id;
+			});
+			if (!this.killInit) {
+				console.log("jo");
+				killedEnemy.push(
+					setTimeout(() => {
+						enemies.splice(index, 1);
+					}, 1000)
+				);
+			}
+		}
 	}
 }
 
 class Coin {
-	constructor() {}
+	position = {
+		x: 0,
+		y: 120,
+	};
+
+	width = 90;
+	height = 90;
+
+	// for image generation
+	currentImage;
+	timeDelayImage = 200;
+	currentImageCounter = 0;
+	timestamp_Framerate = new Date().getTime();
+	currentAnimationArray = IMAGES_COIN;
+
+	constructor() {
+		this.initCoin();
+
+		this.loadSingleImage("img/8_coin/coin_1.png");
+	}
+
+	loadSingleImage(path) {
+		this.currentImage = new Image();
+		this.currentImage.src = path;
+	}
+
+	initCoin() {
+		this.position.x = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100) * 5 + canvas.width;
+		if (this.position.x < 1000) {
+			this.initCoin();
+			return;
+		} else if (this.position.x > backgroundsLayer_one[8].position.x) {
+			this.initCoin();
+			return;
+		}
+	}
+
+	playAnimation(images) {
+		let index = this.currentImageCounter % images.length;
+		let path = images[index];
+		this.currentImage = imageCache[path];
+		this.currentImageCounter++;
+	}
+
+	draw() {
+		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
+			this.playAnimation(this.currentAnimationArray);
+			this.timestamp_Framerate = new Date().getTime();
+		}
+		ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
+	}
 }
 
 function init() {
 	// init arrays
-	coins = [];
 	clouds = [];
 	enemies = [];
 	bottles = [];
+	coinsArray = [];
+	killedEnemy = [];
 	backgroundsLayer_one = [];
 	backgroundsLayer_two = [];
 	backgroundsLayer_three = [];
@@ -463,6 +610,7 @@ function init() {
 	timestamp_ThrownBottle = new Date().getTime();
 
 	flip = true;
+	bossHit = false;
 	bossSpawned = false;
 	flippingImage = false;
 
@@ -522,22 +670,33 @@ function init() {
 	}
 
 	player = new Player();
-	enemies = [];
 
-	let amount;
+	let ChickenAmount;
 	function randomChickenSpawn() {
-		amount = Math.floor(Math.random() * 13);
-		if (amount <= 5) {
+		ChickenAmount = Math.floor(Math.random() * 13);
+		if (ChickenAmount <= 5) {
 			randomChickenSpawn();
 			return;
 		}
-		for (let i = 0; i < amount; i++) {
+		for (let i = 0; i < ChickenAmount; i++) {
 			const chickentype = setType();
 			enemies.push(new Enemy(chickentype));
 		}
 	}
-
 	randomChickenSpawn();
+
+	let CoinsAmount;
+	function randomCoinSpawn() {
+		CoinsAmount = Math.floor(Math.random() * 13);
+		if (CoinsAmount <= 5) {
+			randomCoinSpawn();
+			return;
+		}
+		for (let i = 0; i < CoinsAmount; i++) {
+			coinsArray.push(new Coin());
+		}
+	}
+	randomCoinSpawn();
 
 	function setType() {
 		if (Math.random() < 0.5) return "normal";
@@ -573,15 +732,14 @@ function animate() {
 		if (enemy.type == "boss") enemyDamage = 2;
 		else enemyDamage = 1;
 
-		if (checkForCollision(enemy)) {
-			// player.health -= enemyDamage;
-			if (player.velocity.y > 0 && playerJumping) {
-				console.log("head jump");
-				playerJumping = false;
-				for (let index = 0; index < enemies.length; index++) {
-					if (enemies[index].position.x === enemy.position.x) {
-						if (enemy.type !== "boss") enemies.splice(index, 1);
-					}
+		if (enemy.type != "boss") {
+			if (checkForCollision(enemy)) {
+				// player.health -= enemyDamage;
+				if (enemy.status == "dead") enemy.killInit = true;
+				if (player.velocity.y > 0 && playerJumping && enemy.status != "dead") {
+					console.log(enemies);
+					enemy.status = "dead";
+					playerJumping = false;
 				}
 			}
 		}
@@ -616,7 +774,11 @@ function animate() {
 					if (!doesObjectHitEnemy) {
 						bossHealth -= 25;
 						doesObjectHitEnemy = true;
+						bossHit = true;
 					}
+					setTimeout(() => {
+						bossHit = false;
+					}, 500);
 				} else doesObjectHitEnemy = false;
 			}
 			if (bottle.timestamp + 2000 < new Date().getTime()) {
@@ -640,9 +802,28 @@ function animate() {
 
 	player.update();
 
+	coinsArray.forEach((coin) => {
+		coin.draw();
+		if (checkForCollision(coin)) {
+			for (let index = 0; index < coinsArray.length; index++) {
+				if (coinsArray[index].position.x === coin.position.x) {
+					coinsArray.splice(index, 1);
+					player.coins++;
+				}
+			}
+		}
+	});
+
 	ctx.fillStyle = "black";
 	ctx.font = "25px rubikbubbles";
-	ctx.fillText(player.bottles + " / " + bottleAmount, 20, 80);
+	ctx.fillText(player.bottles + " / " + bottleAmount, 50, 85);
+
+	ctx.fillStyle = "black";
+	ctx.font = "25px rubikbubbles";
+	ctx.fillText(player.coins, 50, 128);
+
+	ctx.drawImage(BottleIcon, 7, 50, 50, 50);
+	ctx.drawImage(CoinIcon, 15, 100, 35, 35);
 
 	// check if jump
 	if (keys.space && player.velocity.y == 0) {
@@ -717,6 +898,9 @@ function animate() {
 		bottles.forEach((bottle) => {
 			bottle.position.x -= player.speed;
 		});
+		coinsArray.forEach((coin) => {
+			coin.position.x -= player.speed;
+		});
 		lastPosition = "right";
 		if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
 			player.currentAnimationArray = IMAGES_WALK;
@@ -739,6 +923,9 @@ function animate() {
 		});
 		bottles.forEach((bottle) => {
 			bottle.position.x += player.speed;
+		});
+		coinsArray.forEach((coin) => {
+			coin.position.x += player.speed;
 		});
 		lastPosition = "left";
 		flippingImage = true;
