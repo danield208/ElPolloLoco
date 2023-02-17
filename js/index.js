@@ -157,6 +157,16 @@ const IMAGES_BottleSplash = [
 	"img/6_salsa_bottle/bottle_splash/6_bottle_splash.png",
 ];
 
+let PressButton = false;
+
+const TryAgain = new Image();
+TryAgain.src = "img/buttons/TryAgain.png";
+
+let TryAgainButtonWidth = TryAgain.width / 2;
+let TryAgainButtonHeight = TryAgain.height / 2;
+let TryAgainButtonPositionX = canvas.width / 2 - TryAgainButtonWidth / 2;
+let TryAgainButtonPositionY = canvas.height / 7 - TryAgainButtonHeight / 2;
+
 let imageCache = {};
 
 function initImageCache() {
@@ -191,28 +201,30 @@ let StartButtonPositionX = canvas.width / 2 - StartButtonWidth / 2;
 let StartButtonPositionY = canvas.height / 7 - StartButtonHeight / 2;
 
 function initStartscreen() {
-	loadSingleImage(Startscreen);
 	ctx.drawImage(Startscreen, 0, 0, canvas.width, canvas.height);
 	ctx.drawImage(StartButton, StartButtonPositionX, StartButtonPositionY, StartButtonWidth, StartButtonHeight);
 	ctx.fillStyle = "red";
+	PressButton = true;
 }
 
-// setTimeout(() => {
-// 	initStartscreen();
-// }, 200);
+setTimeout(() => {
+	initStartscreen();
+}, 200);
 
 let clickX;
 let clickY;
 
 canvas.addEventListener("click", (event) => {
-	const rect = canvas.getBoundingClientRect();
-	clickX = event.clientX - rect.left;
-	clickY = event.clientY - rect.top;
-	if (checkForButton()) {
-		init();
+	if (PressButton) {
+		const rect = canvas.getBoundingClientRect();
+		clickX = event.clientX - rect.left;
+		clickY = event.clientY - rect.top;
+		if (checkForButton()) {
+			init();
+		}
+		clickX = 0;
+		clickY = 0;
 	}
-	clickX = 0;
-	clickY = 0;
 });
 
 function checkForButton() {
@@ -271,6 +283,7 @@ let doesObjectHitEnemy;
 class Player {
 	bottles = 0;
 	coins = 0;
+	InitDead = false;
 
 	offset = {
 		left: 17,
@@ -290,6 +303,8 @@ class Player {
 	currentImageCounter = 0;
 	currentAnimationArray = IMAGES_IDLE;
 	timestamp_Framerate = new Date().getTime();
+
+	timestamp_StopDeadAnimation = new Date().getTime();
 
 	constructor() {
 		this.width = 100;
@@ -349,16 +364,34 @@ class Player {
 	}
 
 	update() {
-		this.checkHealth();
-		this.draw();
-		this.position.y += this.velocity.y;
-		this.position.x += this.velocity.x;
+		if (player.health != 0) {
+			this.checkHealth();
+			this.draw();
+			this.position.y += this.velocity.y;
+			this.position.x += this.velocity.x;
 
-		// set offset
-		this.offsetX = this.position.x + this.offset.left;
-		this.offsetY = this.position.y + this.offset.top;
-		this.offsetWidth = this.width - this.offset.right - this.offset.left;
-		this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
+			// set offset
+			this.offsetX = this.position.x + this.offset.left;
+			this.offsetY = this.position.y + this.offset.top;
+			this.offsetWidth = this.width - this.offset.right - this.offset.left;
+			this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
+		} else {
+			if (this.timestamp_StopDeadAnimation + 700 <= new Date().getTime()) {
+				this.currentImage = GameOver;
+				ctx.drawImage(this.currentImage, 0, 0, canvas.width, canvas.height);
+				PressButton = true;
+				ctx.drawImage(
+					TryAgain,
+					TryAgainButtonPositionX,
+					TryAgainButtonPositionY,
+					TryAgainButtonWidth,
+					TryAgainButtonHeight
+				);
+			} else {
+				this.currentAnimationArray = IMAGES_DEAD;
+				this.draw();
+			}
+		}
 	}
 }
 
@@ -752,6 +785,8 @@ class Coin {
 }
 
 function init() {
+	PressButton = false;
+
 	// init arrays
 	clouds = [];
 	enemies = [];
@@ -865,7 +900,9 @@ function init() {
 }
 
 function animate() {
-	requestAnimationFrame(animate);
+	if (player.health != 0) {
+		requestAnimationFrame(animate);
+	}
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	airBackground.draw();
@@ -944,6 +981,19 @@ function animate() {
 
 	player.update();
 
+	if (
+		player.health == 0 &&
+		player.IinitDead == true &&
+		(player.health == 0 ||
+			(bottleAmount == 3 && bossHealth != 75) ||
+			(bottleAmount == 2 && bossHealth != 50) ||
+			(bottleAmount == 1 && bossHealth != 25) ||
+			bottleAmount == 0)
+	) {
+		player.InitDead = false;
+		player.timestamp_StopDeadAnimation = new Date().getTime();
+	}
+
 	coinsArray.forEach((coin) => {
 		coin.draw();
 		if (checkForCollision(coin)) {
@@ -1013,7 +1063,7 @@ function animate() {
 		bottleAmount == 0
 	)
 		setTimeout(() => {
-			console.log("you lose");
+			player.InitDead = true;
 		}, 200);
 
 	// apply gravity
@@ -1092,7 +1142,7 @@ function animate() {
 		if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
 			player.currentAnimationArray = IMAGES_WALK;
 		}
-	} else if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset)
+	} else if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset && player.health != 0)
 		player.currentAnimationArray = IMAGES_IDLE;
 }
 
@@ -1147,5 +1197,3 @@ document.addEventListener("keyup", (event) => {
 			break;
 	}
 });
-
-init();
