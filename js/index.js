@@ -133,6 +133,30 @@ const IMAGES_BOSS_DEAD = [
 
 const IMAGES_COIN = ["img/8_coin/coin_1.png", "img/8_coin/coin_2.png"];
 
+const IMAGES_BottleGround = [
+	"img/6_salsa_bottle/1_salsa_bottle_on_ground.png",
+	"img/6_salsa_bottle/2_salsa_bottle_on_ground.png",
+];
+
+const BasicBottle = new Image();
+BasicBottle.src = "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png";
+
+const IMAGES_BottleThrown = [
+	"img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png",
+	"img/6_salsa_bottle/bottle_rotation/2_bottle_rotation.png",
+	"img/6_salsa_bottle/bottle_rotation/3_bottle_rotation.png",
+	"img/6_salsa_bottle/bottle_rotation/4_bottle_rotation.png",
+];
+
+const IMAGES_BottleSplash = [
+	"img/6_salsa_bottle/bottle_splash/1_bottle_splash.png",
+	"img/6_salsa_bottle/bottle_splash/2_bottle_splash.png",
+	"img/6_salsa_bottle/bottle_splash/3_bottle_splash.png",
+	"img/6_salsa_bottle/bottle_splash/4_bottle_splash.png",
+	"img/6_salsa_bottle/bottle_splash/5_bottle_splash.png",
+	"img/6_salsa_bottle/bottle_splash/6_bottle_splash.png",
+];
+
 let imageCache = {};
 
 function initImageCache() {
@@ -147,6 +171,9 @@ function initImageCache() {
 	addToImageCache(IMAGES_BOSS_HURT);
 	addToImageCache(IMAGES_BOSS_DEAD);
 	addToImageCache(IMAGES_COIN);
+	addToImageCache(IMAGES_BottleGround);
+	addToImageCache(IMAGES_BottleThrown);
+	addToImageCache(IMAGES_BottleSplash);
 }
 
 function addToImageCache(imageArray) {
@@ -203,7 +230,7 @@ let clouds;
 let enemies;
 let bottles;
 let coinsArray;
-let killedEnemy;
+let timoutArray;
 let backgroundsLayer_one;
 let backgroundsLayer_two;
 let backgroundsLayer_three;
@@ -244,6 +271,18 @@ let doesObjectHitEnemy;
 class Player {
 	bottles = 0;
 	coins = 0;
+
+	offset = {
+		left: 17,
+		right: 28,
+		top: 100,
+		bottom: 10,
+	};
+
+	offsetX;
+	offsetY;
+	offsetWidth;
+	offsetHeight;
 
 	// for image generation
 	currentImage;
@@ -293,6 +332,12 @@ class Player {
 	}
 
 	draw() {
+		ctx.strokeStyle = "blue";
+		ctx.strokeRect(this.offsetX, this.offsetY, this.offsetWidth, this.offsetHeight);
+
+		ctx.strokeStyle = "red";
+		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+
 		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 			this.playAnimation(this.currentAnimationArray);
 			this.timestamp_Framerate = new Date().getTime();
@@ -314,13 +359,41 @@ class Player {
 		this.draw();
 		this.position.y += this.velocity.y;
 		this.position.x += this.velocity.x;
+
+		// set offset
+		this.offsetX = this.position.x + this.offset.left;
+		this.offsetY = this.position.y + this.offset.top;
+		this.offsetWidth = this.width - this.offset.right - this.offset.left;
+		this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
 	}
 }
 
 class Bottle {
-	width = 20;
-	height = 20;
-	timestamp = 0;
+	width = 60;
+	height = 60;
+	splash = false;
+	id = Math.random();
+	bottleDeleteInit = false;
+	bottleDeleting = false;
+
+	offset = {
+		left: 22,
+		right: 12,
+		top: 10,
+		bottom: 8,
+	};
+
+	offsetX;
+	offsetY;
+	offsetWidth;
+	offsetHeight;
+
+	// for image generation
+	currentImage;
+	timeDelayImage = 80;
+	currentImageCounter = 0;
+	timestamp_Framerate = new Date().getTime();
+	currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 
 	constructor({ x = 0, y = canvas.height - this.height - mapOffset, thrown = false, velocityX = 0, velocityY = 0 }) {
 		this.thrown = thrown;
@@ -333,12 +406,27 @@ class Bottle {
 			y: velocityY,
 		};
 
+		this.currentImage = BasicBottle;
+
 		if (!thrown) this.init();
-		else this.setTimsestamp();
 	}
 
 	init() {
+		this.setSpawnDirection();
 		this.setBottleSpawn();
+	}
+
+	setSpawnDirection() {
+		if (Math.random() * 10 <= 5) {
+			this.loadSingleImage(IMAGES_BottleGround[0]);
+		} else {
+			this.loadSingleImage(IMAGES_BottleGround[1]);
+		}
+	}
+
+	loadSingleImage(path) {
+		this.currentImage = new Image();
+		this.currentImage.src = path;
 	}
 
 	setBottleSpawn() {
@@ -347,17 +435,45 @@ class Bottle {
 		else if (this.position.x > backgroundsLayer_one[8].position.x - 800) this.setBottleSpawn();
 	}
 
-	setTimsestamp() {
-		this.timestamp = new Date().getTime();
+	playAnimation(images) {
+		let index = this.currentImageCounter % images.length;
+		let path = images[index];
+		this.currentImage = imageCache[path];
+		this.currentImageCounter++;
 	}
 
 	draw() {
-		ctx.fillStyle = "red";
-		ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
+		ctx.strokeStyle = "blue";
+		ctx.strokeRect(
+			this.position.x + this.offset.left,
+			this.position.y + this.offset.top,
+			this.width - this.offset.right - this.offset.left,
+			this.height - this.offset.bottom - this.offset.top
+		);
+
+		ctx.strokeStyle = "red";
+		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+
+		if (!this.thrown) ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
+		else if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
+			this.playAnimation(this.currentAnimationArray);
+			this.timestamp_Framerate = new Date().getTime();
+		}
+		ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
 	}
 
 	update() {
-		this.draw();
+		if (!this.thrown) {
+			this.draw();
+		} else if (this.splash) {
+			this.timeDelayImage = 200;
+			this.currentAnimationArray = IMAGES_BottleSplash;
+			this.draw();
+		} else {
+			this.currentAnimationArray = IMAGES_BottleThrown;
+			this.draw();
+		}
+
 		this.position.y += this.velocity.y;
 		this.position.x += this.velocity.x;
 		if (this.position.y < canvas.height - this.height - mapOffset) {
@@ -365,7 +481,31 @@ class Bottle {
 		} else {
 			this.velocity.y = 0;
 			this.velocity.x = 0;
+			if (this.thrown) {
+				this.splash = true;
+				this.bottleDeleteInit = true;
+			}
 		}
+
+		if (this.thrown && this.bottleDeleteInit) {
+			if (!this.bottleDeleting) {
+				this.bottleDeleting = true;
+				let index = bottles.findIndex((bottle) => {
+					return bottle.id === this.id;
+				});
+				// timoutArray.push(
+				setTimeout(() => {
+					bottles.splice(index, 1);
+				}, 1000);
+				// );
+			}
+		}
+
+		// set offset
+		this.offsetX = this.position.x + this.offset.left;
+		this.offsetY = this.position.y + this.offset.top;
+		this.offsetWidth = this.width - this.offset.right - this.offset.left;
+		this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
 	}
 }
 
@@ -402,6 +542,18 @@ class Enemy {
 	bossChicken = 300;
 	smallChicken = 50;
 	normalChicken = 80;
+
+	offset = {
+		left: 5,
+		right: 5,
+		top: 5,
+		bottom: 5,
+	};
+
+	offsetX;
+	offsetY;
+	offsetWidth;
+	offsetHeight;
 
 	// for image generation
 	currentImage;
@@ -481,6 +633,17 @@ class Enemy {
 	}
 
 	draw() {
+		ctx.strokeStyle = "blue";
+		ctx.strokeRect(
+			this.position.x + this.offset.left,
+			this.position.y + this.offset.top,
+			this.width - this.offset.right - this.offset.left,
+			this.height - this.offset.bottom - this.offset.top
+		);
+
+		ctx.strokeStyle = "red";
+		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+
 		if (this.type === "normal") this.currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
 		if (this.type === "boss" && bossHealth != 0 && !bossHit) {
@@ -524,18 +687,23 @@ class Enemy {
 			if (player.position.x < this.position.x) this.position.x -= this.enemySpeed;
 			else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
 		} else if (this.status == "dead") {
-			let index = enemies.findIndex((enemy) => {
-				return enemy.id === this.id;
-			});
 			if (!this.killInit) {
-				console.log("jo");
-				killedEnemy.push(
+				let index = enemies.findIndex((enemy) => {
+					return enemy.id === this.id;
+				});
+				timoutArray.push(
 					setTimeout(() => {
 						enemies.splice(index, 1);
 					}, 1000)
 				);
 			}
 		}
+
+		// set offset
+		this.offsetX = this.position.x + this.offset.left;
+		this.offsetY = this.position.y + this.offset.top;
+		this.offsetWidth = this.width - this.offset.right - this.offset.left;
+		this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
 	}
 }
 
@@ -547,6 +715,18 @@ class Coin {
 
 	width = 90;
 	height = 90;
+
+	offset = {
+		left: 30,
+		right: 30,
+		top: 30,
+		bottom: 30,
+	};
+
+	offsetX;
+	offsetY;
+	offsetWidth;
+	offsetHeight;
 
 	// for image generation
 	currentImage;
@@ -585,11 +765,28 @@ class Coin {
 	}
 
 	draw() {
+		ctx.strokeStyle = "blue";
+		ctx.strokeRect(
+			this.position.x + this.offset.left,
+			this.position.y + this.offset.top,
+			this.width - this.offset.right - this.offset.left,
+			this.height - this.offset.bottom - this.offset.top
+		);
+
+		ctx.strokeStyle = "red";
+		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
+
 		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 			this.playAnimation(this.currentAnimationArray);
 			this.timestamp_Framerate = new Date().getTime();
 		}
 		ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
+
+		// set offset
+		this.offsetX = this.position.x + this.offset.left;
+		this.offsetY = this.position.y + this.offset.top;
+		this.offsetWidth = this.width - this.offset.right - this.offset.left;
+		this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
 	}
 }
 
@@ -599,7 +796,7 @@ function init() {
 	enemies = [];
 	bottles = [];
 	coinsArray = [];
-	killedEnemy = [];
+	timoutArray = [];
 	backgroundsLayer_one = [];
 	backgroundsLayer_two = [];
 	backgroundsLayer_three = [];
@@ -737,18 +934,8 @@ function animate() {
 				// player.health -= enemyDamage;
 				if (enemy.status == "dead") enemy.killInit = true;
 				if (player.velocity.y > 0 && playerJumping && enemy.status != "dead") {
-					console.log(enemies);
 					enemy.status = "dead";
 					playerJumping = false;
-				}
-			}
-		}
-
-		// check for boos health
-		if (enemy.type == "boss" && bossHealth == 0) {
-			for (let index = 0; index < enemies.length; index++) {
-				if (enemies[index].type === "boss") {
-					enemies.splice(index, 1);
 				}
 			}
 		}
@@ -756,11 +943,11 @@ function animate() {
 		if (enemy.type == "boss") {
 			bossStats = {
 				position: {
-					x: enemy.position.x,
-					y: enemy.position.y,
+					x: enemy.offsetX,
+					y: enemy.offsetY,
 				},
-				width: enemy.width,
-				height: enemy.height,
+				width: enemy.offsetWidth,
+				height: enemy.offsetHeight,
 			};
 		}
 	});
@@ -781,14 +968,8 @@ function animate() {
 					}, 500);
 				} else doesObjectHitEnemy = false;
 			}
-			if (bottle.timestamp + 2000 < new Date().getTime()) {
-				for (let index = 0; index < bottles.length; index++) {
-					if (bottles[index].position.x === bottle.position.x) {
-						bottles.splice(index, 1);
-					}
-				}
-			}
 		}
+
 		// player collision with normal bottle
 		if (checkForCollision(bottle) && !bottle.thrown) {
 			for (let index = 0; index < bottles.length; index++) {
@@ -839,21 +1020,39 @@ function animate() {
 		player.bottles--;
 		bottleAmount--;
 		timestamp_ThrownBottle = new Date().getTime();
-		bottles.push(
-			new Bottle({
-				thrown: true,
-				x: player.position.x + player.width,
-				y: player.position.y,
-				velocityX: 7,
-				velocityY: -20,
-			})
-		);
+		if (lastPosition === "left") {
+			bottles.push(
+				new Bottle({
+					thrown: true,
+					x: player.offsetX,
+					y: player.offsetY,
+					velocityX: -7,
+					velocityY: -20,
+				})
+			);
+		} else {
+			bottles.push(
+				new Bottle({
+					thrown: true,
+					x: player.offsetX + player.width,
+					y: player.offsetY,
+					velocityX: 7,
+					velocityY: -20,
+				})
+			);
+		}
 	}
 
 	// check player health
-	if (player.health == 0)
+	if (
+		player.health == 0 ||
+		(bottleAmount == 3 && bossHealth != 75) ||
+		(bottleAmount == 2 && bossHealth != 50) ||
+		(bottleAmount == 1 && bossHealth != 25) ||
+		bottleAmount == 0
+	)
 		setTimeout(() => {
-			init();
+			console.log("you lose");
 		}, 200);
 
 	// apply gravity
@@ -868,7 +1067,7 @@ function animate() {
 	// check win
 	if (bossHealth == 0)
 		setTimeout(() => {
-			init();
+			console.log("won");
 		}, 200);
 
 	// spawn boss
@@ -938,19 +1137,19 @@ function animate() {
 
 function checkForCollision(object) {
 	return (
-		player.position.x + player.width >= object.position.x && //player right > object left
-		player.position.y + player.height > object.position.y && //player bottom > object top
-		player.position.x < object.position.x + object.width && // player left < object right
-		player.position.y < object.position.y + object.height // player top < object bottom
+		player.offsetX + player.offsetWidth >= object.offsetX && //player right > object left
+		player.offsetY + player.offsetHeight > object.offsetY && //player bottom > object top
+		player.offsetX < object.offsetX + object.offsetWidth && // player left < object right
+		player.offsetY < object.offsetY + object.offsetHeight // player top < object bottom
 	);
 }
 
 function checkBottle_BossCollision(bottle) {
 	return (
-		bottle.position.x + bottle.width >= bossStats.position.x && //bottle right > bossStats left
-		bottle.position.y + bottle.height - 1 > bossStats.position.y && //bottle bottom > bossStats top
-		bottle.position.x < bossStats.position.x + bossStats.width && // bottle left < bossStats right
-		bottle.position.y < bossStats.position.y + bossStats.height // player top < bossStats bottom
+		bottle.offsetX + bottle.offsetWidth >= bossStats.position.x && //bottle right > bossStats left
+		bottle.offsetY + bottle.offsetHeight - 1 > bossStats.position.y && //bottle bottom > bossStats top
+		bottle.offsetX < bossStats.position.x + bossStats.width && // bottle left < bossStats right
+		bottle.offsetY < bossStats.position.y + bossStats.height // player top < bossStats bottom
 	);
 }
 
