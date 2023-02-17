@@ -332,12 +332,6 @@ class Player {
 	}
 
 	draw() {
-		ctx.strokeStyle = "blue";
-		ctx.strokeRect(this.offsetX, this.offsetY, this.offsetWidth, this.offsetHeight);
-
-		ctx.strokeStyle = "red";
-		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
-
 		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 			this.playAnimation(this.currentAnimationArray);
 			this.timestamp_Framerate = new Date().getTime();
@@ -443,17 +437,6 @@ class Bottle {
 	}
 
 	draw() {
-		ctx.strokeStyle = "blue";
-		ctx.strokeRect(
-			this.position.x + this.offset.left,
-			this.position.y + this.offset.top,
-			this.width - this.offset.right - this.offset.left,
-			this.height - this.offset.bottom - this.offset.top
-		);
-
-		ctx.strokeStyle = "red";
-		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
-
 		if (!this.thrown) ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
 		else if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 			this.playAnimation(this.currentAnimationArray);
@@ -633,17 +616,6 @@ class Enemy {
 	}
 
 	draw() {
-		ctx.strokeStyle = "blue";
-		ctx.strokeRect(
-			this.position.x + this.offset.left,
-			this.position.y + this.offset.top,
-			this.width - this.offset.right - this.offset.left,
-			this.height - this.offset.bottom - this.offset.top
-		);
-
-		ctx.strokeStyle = "red";
-		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
-
 		if (this.type === "normal") this.currentAnimationArray = IMAGES_CHICKEN_NORMAL;
 		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
 		if (this.type === "boss" && bossHealth != 0 && !bossHit) {
@@ -765,17 +737,6 @@ class Coin {
 	}
 
 	draw() {
-		ctx.strokeStyle = "blue";
-		ctx.strokeRect(
-			this.position.x + this.offset.left,
-			this.position.y + this.offset.top,
-			this.width - this.offset.right - this.offset.left,
-			this.height - this.offset.bottom - this.offset.top
-		);
-
-		ctx.strokeStyle = "red";
-		ctx.strokeRect(this.position.x, this.position.y, this.width, this.height);
-
 		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 			this.playAnimation(this.currentAnimationArray);
 			this.timestamp_Framerate = new Date().getTime();
