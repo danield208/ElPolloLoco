@@ -1,62 +1,78 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
+let PressButton = false;
+// for Framerate
+let frameRateTimeStamp;
+let frameRate = 1000 / 70;
 
-// background
-const air = new Image();
-air.src = "img/5_background/layers/air.png";
+// ANCHOR walkingsound
+const walkingsound = new Audio("audio/char_walking.mp3");
+walkingsound.volume = 0.1;
 
-const bgLayer1_1 = new Image();
-bgLayer1_1.src = "img/5_background/layers/1_first_layer/1.png";
-const bgLayer1_2 = new Image();
-bgLayer1_2.src = "img/5_background/layers/1_first_layer/2.png";
-const bgLayer2_1 = new Image();
-bgLayer2_1.src = "img/5_background/layers/2_second_layer/1.png";
-const bgLayer2_2 = new Image();
-bgLayer2_2.src = "img/5_background/layers/2_second_layer/2.png";
-const bgLayer3_1 = new Image();
-bgLayer3_1.src = "img/5_background/layers/3_third_layer/1.png";
-const bgLayer3_2 = new Image();
-bgLayer3_2.src = "img/5_background/layers/3_third_layer/2.png";
+// in init()
+// Arrays
+let clouds;
+let enemies;
+let bottles;
+let coinsArray;
+let timoutArray;
+let backgroundsLayer_one;
+let backgroundsLayer_two;
+let backgroundsLayer_three;
 
-const clouds1 = new Image();
-clouds1.src = "img/5_background/layers/4_clouds/1.png";
-const clouds2 = new Image();
-clouds2.src = "img/5_background/layers/4_clouds/2.png";
+// strings
+let lastPosition;
 
-// intro, outro, win, lose
-const GameOver = new Image();
-GameOver.src = "img/9_intro_outro_screens/GameOver.png";
-const Startscreen = new Image();
-Startscreen.src = "img/9_intro_outro_screens/Startscreen.png";
-const YouWin = new Image();
-YouWin.src = "img/9_intro_outro_screens/YouWin.png";
+// number with new Date()
+let timestamp_ThrownBottle;
 
-// buttons
-const StartButton = new Image();
-StartButton.src = "img/buttons/Start.png";
+let bossStats;
+let bossHealth;
 
-// icons
-const CoinIcon = new Image();
-CoinIcon.src = "img/7_statusbars/3_icons/icon_coin.png";
+let player;
+let airBackground;
 
-const BottleIcon = new Image();
-BottleIcon.src = "img/7_statusbars/3_icons/icon_salsa_bottle.png";
+// numbers
+let enemyDamage;
+const gravity = 1.2;
+const mapOffset = 50;
+let bottleAmount = 12;
+const timeDelay = 400;
+let bossDeadAnimationTimestamp;
 
-// statusbar
-// character
-const char_health_0 = new Image();
-char_health_0.src = "img/7_statusbars/1_statusbar/Statusbar Health/0.png";
-const char_health_20 = new Image();
-char_health_20.src = "img/7_statusbars/1_statusbar/Statusbar Health/20.png";
-const char_health_40 = new Image();
-char_health_40.src = "img/7_statusbars/1_statusbar/Statusbar Health/40.png";
-const char_health_60 = new Image();
-char_health_60.src = "img/7_statusbars/1_statusbar/Statusbar Health/60.png";
-const char_health_80 = new Image();
-char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
-const char_health_100 = new Image();
-char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
+// booleans
+const keys = {
+	left: false,
+	right: false,
+	space: false,
+	throw: false,
+};
+let flip;
+let bossHit;
+let wonGame;
+let initWin;
+let bossSpawned;
+let flippingImage;
+let playerJumping;
+let stopAnimation;
+let setWinTimestamp;
+let doesObjectHitEnemy;
+let globalCurrentImage;
 
+let TryAgainButtonWidth;
+let TryAgainButtonHeight;
+let TryAgainButtonPositionX;
+let TryAgainButtonPositionY;
+
+let StartButtonWidth;
+let StartButtonHeight;
+let StartButtonPositionX;
+let StartButtonPositionY;
+
+let addToImageCacheDone = 0;
+let imageCacheLoaded = false;
+
+// ANCHOR src Arrays
 const IMAGES_IDLE = [
 	"img/2_character_pepe/1_idle/I-1.png",
 	"img/2_character_pepe/1_idle/I-2.png",
@@ -95,59 +111,43 @@ const IMAGES_DEAD = [
 	"img/2_character_pepe/5_dead/D-56.png",
 	"img/2_character_pepe/5_dead/D-57.png",
 ];
-
 const IMAGES_CHICKEN_NORMAL = [
 	"img/3_enemies_chicken/chicken_normal/1_walk/1_w.png",
 	"img/3_enemies_chicken/chicken_normal/1_walk/2_w.png",
 	"img/3_enemies_chicken/chicken_normal/1_walk/3_w.png",
 ];
-const IMAGE_CHICKEN_NORMAL_DEAD = new Image();
-IMAGE_CHICKEN_NORMAL_DEAD.src = "img/3_enemies_chicken/chicken_normal/2_dead/dead.png";
-
 const IMAGES_CHICKEN_SMALL = [
 	"img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
 	"img/3_enemies_chicken/chicken_small/1_walk/2_w.png",
 	"img/3_enemies_chicken/chicken_small/1_walk/3_w.png",
 ];
-const IMAGES_CHICKEN_SMALL_DEAD = new Image();
-IMAGES_CHICKEN_SMALL_DEAD.src = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
-
 const IMAGES_BOSS_WALK = [
 	"img/4_enemie_boss_chicken/1_walk/G1.png",
 	"img/4_enemie_boss_chicken/1_walk/G2.png",
 	"img/4_enemie_boss_chicken/1_walk/G3.png",
 	"img/4_enemie_boss_chicken/1_walk/G4.png",
 ];
-
 const IMAGES_BOSS_HURT = [
 	"img/4_enemie_boss_chicken/4_hurt/G21.png",
 	"img/4_enemie_boss_chicken/4_hurt/G22.png",
 	"img/4_enemie_boss_chicken/4_hurt/G23.png",
 ];
-
 const IMAGES_BOSS_DEAD = [
 	"img/4_enemie_boss_chicken/5_dead/G24.png",
 	"img/4_enemie_boss_chicken/5_dead/G25.png",
 	"img/4_enemie_boss_chicken/5_dead/G26.png",
 ];
-
 const IMAGES_COIN = ["img/8_coin/coin_1.png", "img/8_coin/coin_2.png"];
-
 const IMAGES_BottleGround = [
 	"img/6_salsa_bottle/1_salsa_bottle_on_ground.png",
 	"img/6_salsa_bottle/2_salsa_bottle_on_ground.png",
 ];
-
-const BasicBottle = new Image();
-BasicBottle.src = "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png";
-
 const IMAGES_BottleThrown = [
 	"img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png",
 	"img/6_salsa_bottle/bottle_rotation/2_bottle_rotation.png",
 	"img/6_salsa_bottle/bottle_rotation/3_bottle_rotation.png",
 	"img/6_salsa_bottle/bottle_rotation/4_bottle_rotation.png",
 ];
-
 const IMAGES_BottleSplash = [
 	"img/6_salsa_bottle/bottle_splash/1_bottle_splash.png",
 	"img/6_salsa_bottle/bottle_splash/2_bottle_splash.png",
@@ -157,17 +157,210 @@ const IMAGES_BottleSplash = [
 	"img/6_salsa_bottle/bottle_splash/6_bottle_splash.png",
 ];
 
-let PressButton = false;
-
-const TryAgain = new Image();
-TryAgain.src = "img/buttons/TryAgain.png";
-
-let TryAgainButtonWidth = TryAgain.width / 2;
-let TryAgainButtonHeight = TryAgain.height / 2;
-let TryAgainButtonPositionX = canvas.width / 2 - TryAgainButtonWidth / 2;
-let TryAgainButtonPositionY = canvas.height / 7 - TryAgainButtonHeight / 2;
-
 let imageCache = {};
+
+let newImageContentLoaded = 0;
+let ImageSrcContentLoaded = false;
+
+// ANCHOR hard coded images
+// background
+let air;
+let bgLayer1_1;
+let bgLayer1_2;
+let bgLayer2_1;
+let bgLayer2_2;
+let bgLayer3_1;
+let bgLayer3_2;
+let clouds1;
+let clouds2;
+let GameOver;
+let Startscreen;
+let YouWin;
+let StartButton;
+let CoinIcon;
+let BottleIcon;
+let char_health_0;
+let char_health_20;
+let char_health_40;
+let char_health_60;
+let char_health_80;
+let char_health_100;
+let IMAGE_CHICKEN_NORMAL_DEAD;
+let IMAGES_CHICKEN_SMALL_DEAD;
+let BasicBottle;
+let TryAgain;
+
+let checkImages;
+
+// ANCHOR html element
+let muteButton;
+let muted = true;
+
+document.addEventListener("DOMContentLoaded", () => {
+	muteButton = document.querySelector("#MuteButton");
+	muteButton.addEventListener("click", () => {
+		muteButton.classList.toggle("active");
+		if (muted) muted = false;
+		else muted = true;
+	});
+	checkImages = setInterval(() => {
+		if (!ImageSrcContentLoaded) {
+			setNewImage();
+			initImageCache();
+		}
+		startFirstInit();
+	}, 1);
+});
+
+function startFirstInit() {
+	if (newImageContentLoaded == 25) initStartscreen();
+}
+
+function setNewImage() {
+	ImageSrcContentLoaded = true;
+	air = new Image();
+	air.onload = () => {
+		newImageContentLoaded++;
+	};
+	bgLayer1_1 = new Image();
+	bgLayer1_1.onload = () => {
+		newImageContentLoaded++;
+	};
+	bgLayer1_2 = new Image();
+	bgLayer1_2.onload = () => {
+		newImageContentLoaded++;
+	};
+	bgLayer2_1 = new Image();
+	bgLayer2_1.onload = () => {
+		newImageContentLoaded++;
+	};
+	bgLayer2_2 = new Image();
+	bgLayer2_2.onload = () => {
+		newImageContentLoaded++;
+	};
+	bgLayer3_1 = new Image();
+	bgLayer3_1.onload = () => {
+		newImageContentLoaded++;
+	};
+	bgLayer3_2 = new Image();
+	bgLayer3_2.onload = () => {
+		newImageContentLoaded++;
+	};
+	clouds1 = new Image();
+	clouds1.onload = () => {
+		newImageContentLoaded++;
+	};
+	clouds2 = new Image();
+	clouds2.onload = () => {
+		newImageContentLoaded++;
+	};
+	GameOver = new Image();
+	GameOver.onload = () => {
+		newImageContentLoaded++;
+	};
+	Startscreen = new Image();
+	Startscreen.onload = () => {
+		newImageContentLoaded++;
+	};
+	YouWin = new Image();
+	YouWin.onload = () => {
+		newImageContentLoaded++;
+	};
+	StartButton = new Image();
+	StartButton.onload = () => {
+		newImageContentLoaded++;
+	};
+	CoinIcon = new Image();
+	CoinIcon.onload = () => {
+		newImageContentLoaded++;
+	};
+	BottleIcon = new Image();
+	BottleIcon.onload = () => {
+		newImageContentLoaded++;
+	};
+	char_health_0 = new Image();
+	char_health_0.onload = () => {
+		newImageContentLoaded++;
+	};
+	char_health_20 = new Image();
+	char_health_20.onload = () => {
+		newImageContentLoaded++;
+	};
+	char_health_40 = new Image();
+	char_health_40.onload = () => {
+		newImageContentLoaded++;
+	};
+	char_health_60 = new Image();
+	char_health_60.onload = () => {
+		newImageContentLoaded++;
+	};
+	char_health_80 = new Image();
+	char_health_80.onload = () => {
+		newImageContentLoaded++;
+	};
+	char_health_100 = new Image();
+	char_health_100.onload = () => {
+		newImageContentLoaded++;
+	};
+	IMAGE_CHICKEN_NORMAL_DEAD = new Image();
+	IMAGE_CHICKEN_NORMAL_DEAD.onload = () => {
+		newImageContentLoaded++;
+	};
+	IMAGES_CHICKEN_SMALL_DEAD = new Image();
+	IMAGES_CHICKEN_SMALL_DEAD.onload = () => {
+		newImageContentLoaded++;
+	};
+	BasicBottle = new Image();
+	BasicBottle.onload = () => {
+		newImageContentLoaded++;
+	};
+	TryAgain = new Image();
+	TryAgain.onload = () => {
+		newImageContentLoaded++;
+	};
+
+	setImageSRC();
+}
+
+function setImageSRC() {
+	air.src = "img/5_background/layers/air.png";
+	bgLayer1_1.src = "img/5_background/layers/1_first_layer/1.png";
+	bgLayer1_2.src = "img/5_background/layers/1_first_layer/2.png";
+	bgLayer2_1.src = "img/5_background/layers/2_second_layer/1.png";
+	bgLayer2_2.src = "img/5_background/layers/2_second_layer/2.png";
+	bgLayer3_1.src = "img/5_background/layers/3_third_layer/1.png";
+	bgLayer3_2.src = "img/5_background/layers/3_third_layer/2.png";
+	clouds1.src = "img/5_background/layers/4_clouds/1.png";
+	clouds2.src = "img/5_background/layers/4_clouds/2.png";
+	GameOver.src = "img/9_intro_outro_screens/GameOver.png";
+	Startscreen.src = "img/9_intro_outro_screens/Startscreen.png";
+	YouWin.src = "img/9_intro_outro_screens/YouWin.png";
+	StartButton.src = "img/buttons/Start.png";
+	CoinIcon.src = "img/7_statusbars/3_icons/icon_coin.png";
+	BottleIcon.src = "img/7_statusbars/3_icons/icon_salsa_bottle.png";
+	char_health_0.src = "img/7_statusbars/1_statusbar/Statusbar Health/0.png";
+	char_health_20.src = "img/7_statusbars/1_statusbar/Statusbar Health/20.png";
+	char_health_40.src = "img/7_statusbars/1_statusbar/Statusbar Health/40.png";
+	char_health_60.src = "img/7_statusbars/1_statusbar/Statusbar Health/60.png";
+	char_health_80.src = "img/7_statusbars/1_statusbar/Statusbar Health/80.png";
+	char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
+	IMAGE_CHICKEN_NORMAL_DEAD.src = "img/3_enemies_chicken/chicken_normal/2_dead/dead.png";
+	IMAGES_CHICKEN_SMALL_DEAD.src = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
+	BasicBottle.src = "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png";
+	TryAgain.src = "img/buttons/TryAgain.png";
+}
+
+function setStartscreenOptions() {
+	TryAgainButtonWidth = TryAgain.width / 2;
+	TryAgainButtonHeight = TryAgain.height / 2;
+	TryAgainButtonPositionX = canvas.width / 2 - TryAgainButtonWidth / 2;
+	TryAgainButtonPositionY = canvas.height / 7 - TryAgainButtonHeight / 2;
+
+	StartButtonWidth = StartButton.width / 2;
+	StartButtonHeight = StartButton.height / 2;
+	StartButtonPositionX = canvas.width / 2 - StartButtonWidth / 2;
+	StartButtonPositionY = canvas.height / 7 - StartButtonHeight / 2;
+}
 
 function initImageCache() {
 	addToImageCache(IMAGES_DEAD);
@@ -192,24 +385,17 @@ function addToImageCache(imageArray) {
 		img.src = path;
 		imageCache[path] = img;
 	});
+	addToImageCacheDone++;
 }
-initImageCache();
-
-let StartButtonWidth = StartButton.width / 2;
-let StartButtonHeight = StartButton.height / 2;
-let StartButtonPositionX = canvas.width / 2 - StartButtonWidth / 2;
-let StartButtonPositionY = canvas.height / 7 - StartButtonHeight / 2;
 
 function initStartscreen() {
+	clearInterval(checkImages);
+	setStartscreenOptions();
 	ctx.drawImage(Startscreen, 0, 0, canvas.width, canvas.height);
 	ctx.drawImage(StartButton, StartButtonPositionX, StartButtonPositionY, StartButtonWidth, StartButtonHeight);
 	ctx.fillStyle = "red";
 	PressButton = true;
 }
-
-setTimeout(() => {
-	initStartscreen();
-}, 200);
 
 let clickX;
 let clickY;
@@ -236,54 +422,10 @@ function checkForButton() {
 	);
 }
 
-// in init()
-// Arrays
-let clouds;
-let enemies;
-let bottles;
-let coinsArray;
-let timoutArray;
-let backgroundsLayer_one;
-let backgroundsLayer_two;
-let backgroundsLayer_three;
-
-// strings
-let lastPosition;
-
-// number with new Date()
-let timestamp_ThrownBottle;
-
-let bossStats;
-let bossHealth;
-
-let player;
-let airBackground;
-
-// numbers
-let enemyDamage;
-const gravity = 1.2;
-const mapOffset = 50;
-let bottleAmount = 15;
-const timeDelay = 400;
-
-// booleans
-const keys = {
-	left: false,
-	right: false,
-	space: false,
-	throw: false,
-};
-let bossHit;
-let flip;
-let bossSpawned;
-let flippingImage;
-let playerJumping;
-let stopAnimation;
-let doesObjectHitEnemy;
-
 class Player {
 	bottles = 0;
 	coins = 0;
+	damage = false;
 	InitDead = true;
 	playerDead = false;
 
@@ -306,7 +448,7 @@ class Player {
 	currentAnimationArray = IMAGES_IDLE;
 	timestamp_Framerate = new Date().getTime();
 
-	timestamp_StopDeadAnimation = new Date().getTime();
+	BossTimestamp_StopDeadAnimation = new Date().getTime();
 
 	constructor() {
 		this.width = 100;
@@ -315,13 +457,13 @@ class Player {
 		this.jumpHieght = 25;
 		this.health = 1000;
 		this.CharHealthBar;
-		this.position = {
-			x: canvas.width / 3,
-			y: 0,
-		};
 		this.velocity = {
 			x: 0,
 			y: 0,
+		};
+		this.position = {
+			x: canvas.width / 3,
+			y: 177,
 		};
 
 		this.loadSingleImage("img/2_character_pepe/1_idle/I-1.png");
@@ -563,6 +705,9 @@ class Enemy {
 	smallChicken = 50;
 	normalChicken = 80;
 
+	// boss
+	healthStatus;
+
 	offset = {
 		left: 5,
 		right: 5,
@@ -657,9 +802,9 @@ class Enemy {
 		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
 		if (this.type === "boss" && bossHealth != 0 && !bossHit) {
 			this.currentAnimationArray = IMAGES_BOSS_WALK;
-		} else if (bossHit) {
+		} else if (this.type === "boss" && bossHit) {
 			this.currentAnimationArray = IMAGES_BOSS_HURT;
-		} else if (bossHealth == 0) this.currentAnimationArray = IMAGES_BOSS_DEAD;
+		} else if (this.type === "boss" && bossHealth == 0) this.currentAnimationArray = IMAGES_BOSS_DEAD;
 
 		if (this.type != "boos") {
 			if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime() && this.status != "dead") {
@@ -673,10 +818,10 @@ class Enemy {
 			if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
 				this.playAnimation(this.currentAnimationArray);
 				this.timestamp_Framerate = new Date().getTime();
+			} else if (bossHealth == 0) {
+				if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
+				if (this.type == "small") this.currentImage = IMAGES_CHICKEN_SMALL_DEAD;
 			}
-			// else if (bossHealth == 0) {
-			// 	if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
-			// }
 		}
 
 		if (player.position.x > this.position.x && this.status != "dead") {
@@ -688,6 +833,37 @@ class Enemy {
 		} else {
 			ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
 		}
+
+		if (this.type == "boss") {
+			this.checkForHealthStatus();
+			ctx.drawImage(this.healthStatus, this.position.x, this.position.y - 10, 200, 50);
+
+			if (wonGame && initWin) {
+				if (BossTimestamp_StopDeadAnimation + 300 <= new Date().getTime()) {
+					console.log("wonGame");
+					initWin = false;
+					stopAnimation = true;
+					globalCurrentImage = YouWin;
+					ctx.drawImage(globalCurrentImage, canvas.width / 2 - 250, canvas.height / 2 - 100, 500, 200);
+					PressButton = true;
+					ctx.drawImage(
+						TryAgain,
+						TryAgainButtonPositionX,
+						TryAgainButtonPositionY,
+						TryAgainButtonWidth,
+						TryAgainButtonHeight
+					);
+				}
+			}
+		}
+	}
+
+	checkForHealthStatus() {
+		if (bossHealth == 100) this.healthStatus = char_health_100;
+		else if (bossHealth == 75) this.healthStatus = char_health_80;
+		else if (bossHealth == 50) this.healthStatus = char_health_60;
+		else if (bossHealth == 25) this.healthStatus = char_health_20;
+		else if (bossHealth == 0) this.healthStatus = char_health_0;
 	}
 
 	update() {
@@ -700,11 +876,9 @@ class Enemy {
 				let index = enemies.findIndex((enemy) => {
 					return enemy.id === this.id;
 				});
-				timoutArray.push(
-					setTimeout(() => {
-						enemies.splice(index, 1);
-					}, 1000)
-				);
+				setTimeout(() => {
+					enemies.splice(index, 1);
+				}, 1000);
 			}
 		}
 
@@ -803,14 +977,19 @@ function init() {
 
 	// set default values
 	bossHealth = 100;
-	bottleAmount = 15;
+	bottleAmount = 12;
 	timestamp_ThrownBottle = new Date().getTime();
 
+	frameRateTimeStamp = new Date().getTime();
+
 	flip = true;
+	initWin = true;
 	bossHit = false;
+	wonGame = false;
 	bossSpawned = false;
 	flippingImage = false;
 	stopAnimation = false;
+	setWinTimestamp = false;
 
 	lastPosition = "right";
 	playerJumping = false;
@@ -905,239 +1084,272 @@ function init() {
 }
 
 function animate() {
+	if (frameRateTimeStamp + frameRate <= new Date().getTime()) {
+		frameRateTimeStamp = new Date().getTime();
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		airBackground.draw();
+
+		clouds.forEach((cloud) => {
+			cloud.update();
+		});
+
+		backgroundsLayer_three.forEach((background) => {
+			background.draw();
+		});
+		backgroundsLayer_two.forEach((background) => {
+			background.draw();
+		});
+		backgroundsLayer_one.forEach((background) => {
+			background.draw();
+		});
+
+		enemies.forEach((enemy) => {
+			enemy.update();
+
+			if (enemy.type == "boss") enemyDamage = 2;
+			else enemyDamage = 1;
+
+			if (checkForCollision(enemy)) {
+				if (enemy.type != "boss") {
+					if (enemy.status == "dead") enemy.killInit = true;
+					if (player.velocity.y > 0 && playerJumping && enemy.status != "dead") {
+						enemy.status = "dead";
+						playerJumping = false;
+					}
+				}
+
+				if (!playerJumping && enemy.status != "dead") {
+					player.damage = true;
+					player.health -= enemyDamage;
+				}
+			} else {
+				setTimeout(() => {
+					player.damage = false;
+				}, 200);
+			}
+
+			if (enemy.type == "boss") {
+				bossStats = {
+					position: {
+						x: enemy.offsetX,
+						y: enemy.offsetY,
+					},
+					width: enemy.offsetWidth,
+					height: enemy.offsetHeight,
+				};
+			}
+		});
+
+		bottles.forEach((bottle) => {
+			bottle.update();
+			// for thrown bottle
+			if (bottle.thrown) {
+				if (bottle.position.y < canvas.height - bottle.height - mapOffset && bossSpawned) {
+					if (checkBottle_BossCollision(bottle)) {
+						if (!doesObjectHitEnemy) {
+							bossHealth -= 25;
+							doesObjectHitEnemy = true;
+							bossHit = true;
+						}
+						setTimeout(() => {
+							bossHit = false;
+						}, 500);
+					} else doesObjectHitEnemy = false;
+				}
+			}
+
+			// player collision with normal bottle
+			if (checkForCollision(bottle) && !bottle.thrown) {
+				for (let index = 0; index < bottles.length; index++) {
+					if (bottles[index].position.x === bottle.position.x) {
+						bottles.splice(index, 1);
+						player.bottles++;
+					}
+				}
+			}
+		});
+
+		player.update();
+
+		if (
+			player.InitDead &&
+			(player.health <= 0 ||
+				(bottleAmount == 3 && bossHealth != 75) ||
+				(bottleAmount == 2 && bossHealth != 50) ||
+				(bottleAmount == 1 && bossHealth != 25) ||
+				bottleAmount == 0)
+		) {
+			console.log("jo");
+			player.InitDead = false;
+			player.playerDead = true;
+			player.timestamp_StopDeadAnimation = new Date().getTime();
+		}
+
+		coinsArray.forEach((coin) => {
+			coin.draw();
+			if (checkForCollision(coin)) {
+				for (let index = 0; index < coinsArray.length; index++) {
+					if (coinsArray[index].position.x === coin.position.x) {
+						coinsArray.splice(index, 1);
+						player.coins++;
+					}
+				}
+			}
+		});
+
+		ctx.fillStyle = "black";
+		ctx.font = "25px rubikbubbles";
+		ctx.fillText(player.bottles + " / " + 12, 50, 85);
+
+		ctx.fillStyle = "black";
+		ctx.font = "25px rubikbubbles";
+		ctx.fillText(player.coins, 50, 128);
+
+		ctx.drawImage(BottleIcon, 7, 50, 50, 50);
+		ctx.drawImage(CoinIcon, 15, 100, 35, 35);
+
+		// check if jump
+		if (keys.space && player.velocity.y == 0) {
+			player.velocity.y -= player.jumpHieght;
+			player.timeDelayImage = 70;
+			player.currentImageCounter = 0;
+			playerJumping = true;
+			player.currentAnimationArray = IMAGES_JUMP;
+		}
+
+		// check if throwing
+		if (keys.throw && player.bottles > 0 && timestamp_ThrownBottle + timeDelay < new Date().getTime()) {
+			player.bottles--;
+			bottleAmount--;
+			timestamp_ThrownBottle = new Date().getTime();
+			if (lastPosition === "left") {
+				bottles.push(
+					new Bottle({
+						thrown: true,
+						x: player.offsetX - 25,
+						y: player.offsetY + 25,
+						velocityX: -7,
+						velocityY: -20,
+					})
+				);
+			} else {
+				bottles.push(
+					new Bottle({
+						thrown: true,
+						x: player.offsetX + 25,
+						y: player.offsetY + 25,
+						velocityX: 7,
+						velocityY: -20,
+					})
+				);
+			}
+		}
+
+		// apply gravity
+		if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset)
+			player.velocity.y += gravity;
+		else {
+			if (player.offsetY + player.offsetHeight + 11 >= canvas.height - mapOffset) {
+				playerJumping = false;
+			}
+			player.velocity.y = 0;
+		}
+
+		// set player.timeDelay back to default after jumping
+		if (player.position.y + player.height - 10 >= canvas.height - mapOffset) {
+			player.timeDelayImage = 100;
+		}
+
+		// check win
+		if (bossHealth == 0 && !wonGame) {
+			if (!setWinTimestamp) {
+				setWinTimestamp = true;
+				BossTimestamp_StopDeadAnimation = new Date().getTime();
+				console.log("setTime");
+			}
+			wonGame = true;
+		}
+
+		// spawn boss
+		if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
+			if (!bossSpawned) {
+				enemies.push(new Enemy("boss"));
+				bossSpawned = true;
+			}
+		}
+
+		if (keys.right && backgroundsLayer_one[8].position.x > 50) {
+			clouds.forEach((cloud) => {
+				cloud.position.x -= player.speed * 0.22;
+			});
+			backgroundsLayer_three.forEach((background) => {
+				background.position.x -= player.speed * 0.44;
+			});
+			backgroundsLayer_two.forEach((background) => {
+				background.position.x -= player.speed * 0.66;
+			});
+			backgroundsLayer_one.forEach((background) => {
+				background.position.x -= player.speed;
+			});
+			enemies.forEach((enemy) => {
+				enemy.position.x -= player.speed;
+			});
+			bottles.forEach((bottle) => {
+				bottle.position.x -= player.speed;
+			});
+			coinsArray.forEach((coin) => {
+				coin.position.x -= player.speed;
+			});
+			lastPosition = "right";
+			if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset && !player.damage) {
+				player.currentAnimationArray = IMAGES_WALK;
+				if (muted) walkingsound.play();
+			} else if (!playerJumping) player.currentAnimationArray = IMAGES_HURT;
+		} else if (keys.left && backgroundsLayer_one[0].position.x < -50) {
+			clouds.forEach((cloud) => {
+				cloud.position.x += player.speed * 0.22;
+			});
+			backgroundsLayer_three.forEach((background) => {
+				background.position.x += player.speed * 0.44;
+			});
+			backgroundsLayer_two.forEach((background) => {
+				background.position.x += player.speed * 0.66;
+			});
+			backgroundsLayer_one.forEach((background) => {
+				background.position.x += player.speed;
+			});
+			enemies.forEach((enemy) => {
+				enemy.position.x += player.speed;
+			});
+			bottles.forEach((bottle) => {
+				bottle.position.x += player.speed;
+			});
+			coinsArray.forEach((coin) => {
+				coin.position.x += player.speed;
+			});
+			lastPosition = "left";
+			flippingImage = true;
+			if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset && !player.damage) {
+				player.currentAnimationArray = IMAGES_WALK;
+				if (muted) walkingsound.play();
+			} else if (!playerJumping) {
+				walkingsound.pause();
+				player.currentAnimationArray = IMAGES_HURT;
+			}
+		} else if (
+			player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset &&
+			player.health != 0 &&
+			!player.damage
+		) {
+			player.currentAnimationArray = IMAGES_IDLE;
+			walkingsound.pause();
+		} else if (!playerJumping) player.currentAnimationArray = IMAGES_HURT;
+	}
+
 	if (!stopAnimation) {
 		requestAnimationFrame(animate);
 	}
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-	airBackground.draw();
-
-	clouds.forEach((cloud) => {
-		cloud.update();
-	});
-
-	backgroundsLayer_three.forEach((background) => {
-		background.draw();
-	});
-	backgroundsLayer_two.forEach((background) => {
-		background.draw();
-	});
-	backgroundsLayer_one.forEach((background) => {
-		background.draw();
-	});
-
-	enemies.forEach((enemy) => {
-		enemy.update();
-
-		if (enemy.type == "boss") enemyDamage = 2;
-		else enemyDamage = 1;
-
-		if (enemy.type != "boss") {
-			if (checkForCollision(enemy)) {
-				player.health -= enemyDamage;
-				if (enemy.status == "dead") enemy.killInit = true;
-				if (player.velocity.y > 0 && playerJumping && enemy.status != "dead") {
-					enemy.status = "dead";
-					playerJumping = false;
-				}
-			}
-		}
-
-		if (enemy.type == "boss") {
-			bossStats = {
-				position: {
-					x: enemy.offsetX,
-					y: enemy.offsetY,
-				},
-				width: enemy.offsetWidth,
-				height: enemy.offsetHeight,
-			};
-		}
-	});
-
-	bottles.forEach((bottle) => {
-		bottle.update();
-		// for thrown bottle
-		if (bottle.thrown) {
-			if (bottle.position.y < canvas.height - bottle.height - mapOffset && bossSpawned) {
-				if (checkBottle_BossCollision(bottle)) {
-					if (!doesObjectHitEnemy) {
-						bossHealth -= 25;
-						doesObjectHitEnemy = true;
-						bossHit = true;
-					}
-					setTimeout(() => {
-						bossHit = false;
-					}, 500);
-				} else doesObjectHitEnemy = false;
-			}
-		}
-
-		// player collision with normal bottle
-		if (checkForCollision(bottle) && !bottle.thrown) {
-			for (let index = 0; index < bottles.length; index++) {
-				if (bottles[index].position.x === bottle.position.x) {
-					bottles.splice(index, 1);
-					player.bottles++;
-				}
-			}
-		}
-	});
-
-	player.update();
-
-	if (
-		player.InitDead &&
-		(player.health <= 0 ||
-			(bottleAmount == 3 && bossHealth != 75) ||
-			(bottleAmount == 2 && bossHealth != 50) ||
-			(bottleAmount == 1 && bossHealth != 25) ||
-			bottleAmount == 0)
-	) {
-		console.log("jo");
-		player.InitDead = false;
-		player.playerDead = true;
-		player.timestamp_StopDeadAnimation = new Date().getTime();
-	}
-
-	coinsArray.forEach((coin) => {
-		coin.draw();
-		if (checkForCollision(coin)) {
-			for (let index = 0; index < coinsArray.length; index++) {
-				if (coinsArray[index].position.x === coin.position.x) {
-					coinsArray.splice(index, 1);
-					player.coins++;
-				}
-			}
-		}
-	});
-
-	ctx.fillStyle = "black";
-	ctx.font = "25px rubikbubbles";
-	ctx.fillText(player.bottles + " / " + bottleAmount, 50, 85);
-
-	ctx.fillStyle = "black";
-	ctx.font = "25px rubikbubbles";
-	ctx.fillText(player.coins, 50, 128);
-
-	ctx.drawImage(BottleIcon, 7, 50, 50, 50);
-	ctx.drawImage(CoinIcon, 15, 100, 35, 35);
-
-	// check if jump
-	if (keys.space && player.velocity.y == 0) {
-		player.velocity.y -= player.jumpHieght;
-		player.timeDelayImage = 70;
-		player.currentImageCounter = 0;
-		player.currentAnimationArray = IMAGES_JUMP;
-		playerJumping = true;
-	}
-
-	// check if throwing
-	if (keys.throw && player.bottles > 0 && timestamp_ThrownBottle + timeDelay < new Date().getTime()) {
-		player.bottles--;
-		bottleAmount--;
-		timestamp_ThrownBottle = new Date().getTime();
-		if (lastPosition === "left") {
-			bottles.push(
-				new Bottle({
-					thrown: true,
-					x: player.offsetX,
-					y: player.offsetY,
-					velocityX: -7,
-					velocityY: -20,
-				})
-			);
-		} else {
-			bottles.push(
-				new Bottle({
-					thrown: true,
-					x: player.offsetX + player.width,
-					y: player.offsetY,
-					velocityX: 7,
-					velocityY: -20,
-				})
-			);
-		}
-	}
-
-	// apply gravity
-	if (player.position.y + player.height + player.velocity.y <= canvas.height - mapOffset) player.velocity.y += gravity;
-	else player.velocity.y = 0;
-
-	// set player.timeDelay back to default after jumping
-	if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
-		player.timeDelayImage = 100;
-	}
-
-	// check win
-	if (bossHealth == 0)
-		setTimeout(() => {
-			console.log("won");
-		}, 200);
-
-	// spawn boss
-	if (player.position.x > backgroundsLayer_one[8].position.x - 1000) {
-		if (!bossSpawned) {
-			enemies.push(new Enemy("boss"));
-			bossSpawned = true;
-		}
-	}
-
-	if (keys.right && backgroundsLayer_one[8].position.x > 50) {
-		clouds.forEach((cloud) => {
-			cloud.position.x -= player.speed * 0.22;
-		});
-		backgroundsLayer_three.forEach((background) => {
-			background.position.x -= player.speed * 0.44;
-		});
-		backgroundsLayer_two.forEach((background) => {
-			background.position.x -= player.speed * 0.66;
-		});
-		backgroundsLayer_one.forEach((background) => {
-			background.position.x -= player.speed;
-		});
-		enemies.forEach((enemy) => {
-			enemy.position.x -= player.speed;
-		});
-		bottles.forEach((bottle) => {
-			bottle.position.x -= player.speed;
-		});
-		coinsArray.forEach((coin) => {
-			coin.position.x -= player.speed;
-		});
-		lastPosition = "right";
-		if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
-			player.currentAnimationArray = IMAGES_WALK;
-		}
-	} else if (keys.left && backgroundsLayer_one[0].position.x < -50) {
-		clouds.forEach((cloud) => {
-			cloud.position.x += player.speed * 0.22;
-		});
-		backgroundsLayer_three.forEach((background) => {
-			background.position.x += player.speed * 0.44;
-		});
-		backgroundsLayer_two.forEach((background) => {
-			background.position.x += player.speed * 0.66;
-		});
-		backgroundsLayer_one.forEach((background) => {
-			background.position.x += player.speed;
-		});
-		enemies.forEach((enemy) => {
-			enemy.position.x += player.speed;
-		});
-		bottles.forEach((bottle) => {
-			bottle.position.x += player.speed;
-		});
-		coinsArray.forEach((coin) => {
-			coin.position.x += player.speed;
-		});
-		lastPosition = "left";
-		flippingImage = true;
-		if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset) {
-			player.currentAnimationArray = IMAGES_WALK;
-		}
-	} else if (player.position.y + player.height + player.velocity.y >= canvas.height - mapOffset && player.health != 0)
-		player.currentAnimationArray = IMAGES_IDLE;
 }
 
 function checkForCollision(object) {
