@@ -69,6 +69,21 @@ let StartButtonHeight;
 let StartButtonPositionX;
 let StartButtonPositionY;
 
+let ButtonWidth;
+let ButtonHeight;
+
+let ArrowButtonRightPositionX;
+let ArrowButtonRightPositionY;
+
+let ArrowButtonLeftPositionX;
+let ArrowButtonLeftPositionY;
+
+let ArrowButtonUPPositionX;
+let ArrowButtonUPPositionY;
+
+let BottleButtonPositionX;
+let BottleButtonPositionY;
+
 let addToImageCacheDone = 0;
 let imageCacheLoaded = false;
 
@@ -189,14 +204,43 @@ let IMAGE_CHICKEN_NORMAL_DEAD;
 let IMAGES_CHICKEN_SMALL_DEAD;
 let BasicBottle;
 let TryAgain;
+let bottleButton;
+let arrowButton;
+let arrowButtonUP;
 
 let checkImages;
+let drawTouchButtons = false;
 
 // ANCHOR html element
 let muteButton;
 let muted = true;
 
+let checkWindowInterval;
+
+function checkForMobile() {
+	let width = window.innerWidth;
+	let height = window.innerHeight;
+
+	if (width <= 1086 || height <= 648) {
+		if (width < height) {
+			PressButton = false;
+			document.getElementById("warning").style = "display: flex;";
+		} else {
+			document.getElementById("warning").style = "display: none;";
+			PressButton = true;
+		}
+		drawTouchButtons = true;
+	} else {
+		document.getElementById("warning").style = "display: none;";
+		drawTouchButtons = false;
+	}
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+	checkWindowInterval = setInterval(() => {
+		checkForMobile();
+	}, 20);
+
 	muteButton = document.querySelector("#MuteButton");
 	muteButton.addEventListener("click", () => {
 		muteButton.classList.toggle("active");
@@ -213,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function startFirstInit() {
-	if (newImageContentLoaded == 25) initStartscreen();
+	if (newImageContentLoaded == 28) initStartscreen();
 }
 
 function setNewImage() {
@@ -318,6 +362,18 @@ function setNewImage() {
 	TryAgain.onload = () => {
 		newImageContentLoaded++;
 	};
+	bottleButton = new Image();
+	bottleButton.onload = () => {
+		newImageContentLoaded++;
+	};
+	arrowButton = new Image();
+	arrowButton.onload = () => {
+		newImageContentLoaded++;
+	};
+	arrowButtonUP = new Image();
+	arrowButtonUP.onload = () => {
+		newImageContentLoaded++;
+	};
 
 	setImageSRC();
 }
@@ -348,6 +404,9 @@ function setImageSRC() {
 	IMAGES_CHICKEN_SMALL_DEAD.src = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
 	BasicBottle.src = "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png";
 	TryAgain.src = "img/buttons/TryAgain.png";
+	bottleButton.src = "img/Keys/bottle.png";
+	arrowButton.src = "img/Keys/button_right.png";
+	arrowButtonUP.src = "img/Keys/button_up.png";
 }
 
 function setStartscreenOptions() {
@@ -360,6 +419,21 @@ function setStartscreenOptions() {
 	StartButtonHeight = StartButton.height / 2;
 	StartButtonPositionX = canvas.width / 2 - StartButtonWidth / 2;
 	StartButtonPositionY = canvas.height / 7 - StartButtonHeight / 2;
+
+	ButtonWidth = 80;
+	ButtonHeight = 80;
+
+	ArrowButtonRightPositionX = 120;
+	ArrowButtonRightPositionY = canvas.height - 20 - 80;
+
+	ArrowButtonLeftPositionX = 30 * -1 - 80;
+	ArrowButtonLeftPositionY = canvas.height - 20 - 80;
+
+	ArrowButtonUPPositionX = canvas.width - 90;
+	ArrowButtonUPPositionY = canvas.height - 20 - 80;
+
+	BottleButtonPositionX = canvas.width - 180;
+	BottleButtonPositionY = canvas.height - 20 - 80;
 }
 
 function initImageCache() {
@@ -401,10 +475,18 @@ let clickX;
 let clickY;
 
 canvas.addEventListener("click", (event) => {
-	if (PressButton) {
+	if (PressButton && event.pointerType != "touch") {
+		console.log("click");
 		const rect = canvas.getBoundingClientRect();
 		clickX = event.clientX - rect.left;
 		clickY = event.clientY - rect.top;
+		if (checkForButton()) {
+			init();
+		}
+		clickX = 0;
+		clickY = 0;
+	} else if (PressButton) {
+		console.log("touch");
 		if (checkForButton()) {
 			init();
 		}
@@ -521,7 +603,7 @@ class Player {
 			this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
 		} else {
 			if (this.timestamp_StopDeadAnimation + 700 <= new Date().getTime()) {
-				console.log("loaded");
+				walkingsound.pause();
 				stopAnimation = true;
 				this.currentImage = GameOver;
 				ctx.drawImage(this.currentImage, 0, 0, canvas.width, canvas.height);
@@ -548,6 +630,7 @@ class Bottle {
 	id = Math.random();
 	bottleDeleteInit = false;
 	bottleDeleting = false;
+	canHit = true;
 
 	offset = {
 		left: 22,
@@ -652,14 +735,12 @@ class Bottle {
 		if (this.thrown && this.bottleDeleteInit) {
 			if (!this.bottleDeleting) {
 				this.bottleDeleting = true;
-				let index = bottles.findIndex((bottle) => {
-					return bottle.id === this.id;
-				});
-				// timoutArray.push(
 				setTimeout(() => {
+					let index = bottles.findIndex((bottle) => {
+						return bottle.id === this.id;
+					});
 					bottles.splice(index, 1);
 				}, 1000);
-				// );
 			}
 		}
 
@@ -840,7 +921,7 @@ class Enemy {
 
 			if (wonGame && initWin) {
 				if (BossTimestamp_StopDeadAnimation + 300 <= new Date().getTime()) {
-					console.log("wonGame");
+					walkingsound.pause();
 					initWin = false;
 					stopAnimation = true;
 					globalCurrentImage = YouWin;
@@ -873,10 +954,10 @@ class Enemy {
 			else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
 		} else if (this.status == "dead") {
 			if (!this.killInit) {
-				let index = enemies.findIndex((enemy) => {
-					return enemy.id === this.id;
-				});
 				setTimeout(() => {
+					let index = enemies.findIndex((enemy) => {
+						return enemy.id === this.id;
+					});
 					enemies.splice(index, 1);
 				}, 1000);
 			}
@@ -1144,25 +1225,26 @@ function animate() {
 		bottles.forEach((bottle) => {
 			bottle.update();
 			// for thrown bottle
-			if (bottle.thrown) {
-				if (bottle.position.y < canvas.height - bottle.height - mapOffset && bossSpawned) {
-					if (checkBottle_BossCollision(bottle)) {
-						if (!doesObjectHitEnemy) {
+			if (bottle.position.y < canvas.height - bottle.height - mapOffset && bossSpawned && bottle.thrown) {
+				if (checkBottle_BossCollision(bottle)) {
+					if (!doesObjectHitEnemy) {
+						if (bottle.canHit) {
 							bossHealth -= 25;
-							doesObjectHitEnemy = true;
-							bossHit = true;
+							bottle.canHit = false;
 						}
-						setTimeout(() => {
-							bossHit = false;
-						}, 500);
-					} else doesObjectHitEnemy = false;
-				}
+						bossHit = false;
+						doesObjectHitEnemy = true;
+					}
+					setTimeout(() => {
+						bossHit = false;
+					}, 500);
+				} else doesObjectHitEnemy = false;
 			}
 
 			// player collision with normal bottle
 			if (checkForCollision(bottle) && !bottle.thrown) {
 				for (let index = 0; index < bottles.length; index++) {
-					if (bottles[index].position.x === bottle.position.x) {
+					if (bottles[index].id === bottle.id) {
 						bottles.splice(index, 1);
 						player.bottles++;
 					}
@@ -1180,7 +1262,6 @@ function animate() {
 				(bottleAmount == 1 && bossHealth != 25) ||
 				bottleAmount == 0)
 		) {
-			console.log("jo");
 			player.InitDead = false;
 			player.playerDead = true;
 			player.timestamp_StopDeadAnimation = new Date().getTime();
@@ -1266,7 +1347,6 @@ function animate() {
 			if (!setWinTimestamp) {
 				setWinTimestamp = true;
 				BossTimestamp_StopDeadAnimation = new Date().getTime();
-				console.log("setTime");
 			}
 			wonGame = true;
 		}
@@ -1277,6 +1357,37 @@ function animate() {
 				enemies.push(new Enemy("boss"));
 				bossSpawned = true;
 			}
+		}
+
+		// ANCHOR draw touch buttons
+		if (drawTouchButtons) {
+			ctx.drawImage(arrowButton, ArrowButtonRightPositionX, ArrowButtonRightPositionY, ButtonWidth, ButtonHeight);
+			ctx.save();
+			ctx.scale(-1, 1);
+			ctx.drawImage(arrowButton, ArrowButtonLeftPositionX, ArrowButtonLeftPositionY, ButtonWidth, ButtonHeight);
+			ctx.restore();
+
+			ctx.drawImage(arrowButtonUP, ArrowButtonUPPositionX, ArrowButtonUPPositionY, ButtonWidth, ButtonHeight);
+			ctx.drawImage(bottleButton, BottleButtonPositionX, BottleButtonPositionY, ButtonWidth, ButtonHeight);
+			let buttons = ["right", "left", "up", "throw"];
+			buttons.forEach((button) => {
+				if (checkForButtonCollision(button)) {
+					switch (button) {
+						case "left":
+							keys.left = true;
+							break;
+						case "right":
+							keys.right = true;
+							break;
+						case "up":
+							keys.space = true;
+							break;
+						case "throw":
+							keys.throw = true;
+							break;
+					}
+				}
+			});
 		}
 
 		if (keys.right && backgroundsLayer_one[8].position.x > 50) {
@@ -1370,6 +1481,38 @@ function checkBottle_BossCollision(bottle) {
 	);
 }
 
+function checkForButtonCollision(button) {
+	if (button == "right") {
+		return (
+			clickX > ArrowButtonRightPositionX && // clickX > picture left
+			clickX < ArrowButtonRightPositionX + ButtonWidth && // clickX < picture right
+			clickY > ArrowButtonRightPositionY && // clixkY > picture top
+			clickY < ArrowButtonRightPositionY + ButtonHeight // clickY < picture bottom
+		);
+	} else if (button == "left") {
+		return (
+			clickX > ArrowButtonLeftPositionX * -1 - 80 && // clickX > picture left
+			clickX < ArrowButtonLeftPositionX * -1 - 80 + ButtonWidth && // clickX < picture right
+			clickY > ArrowButtonLeftPositionY && // clixkY > picture top
+			clickY < ArrowButtonLeftPositionY + ButtonHeight // clickY < picture bottom
+		);
+	} else if (button == "up") {
+		return (
+			clickX > ArrowButtonUPPositionX && // clickX > picture left
+			clickX < ArrowButtonUPPositionX + ButtonWidth && // clickX < picture right
+			clickY > ArrowButtonUPPositionY && // clixkY > picture top
+			clickY < ArrowButtonUPPositionY + ButtonHeight // clickY < picture bottom
+		);
+	} else if (button == "throw") {
+		return (
+			clickX > BottleButtonPositionX && // clickX > picture left
+			clickX < BottleButtonPositionX + ButtonWidth && // clickX < picture right
+			clickY > BottleButtonPositionY && // clixkY > picture top
+			clickY < BottleButtonPositionY + ButtonHeight // clickY < picture bottom
+		);
+	}
+}
+
 document.addEventListener("keydown", (event) => {
 	switch (event.key) {
 		case "a":
@@ -1402,4 +1545,16 @@ document.addEventListener("keyup", (event) => {
 			keys.throw = false;
 			break;
 	}
+});
+
+document.addEventListener("touchstart", (event) => {
+	clickX = (canvas.width / window.innerWidth) * event.touches[0].clientX;
+	clickY = (canvas.height / window.innerHeight) * event.touches[0].clientY;
+});
+
+document.addEventListener("touchend", (event) => {
+	keys.left = false;
+	keys.right = false;
+	keys.space = false;
+	keys.throw = false;
 });
