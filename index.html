@@ -7,10 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EPL</title>
 
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+
     <!-- import style -->
     <link rel="stylesheet" href="style.css">
 
     <!-- import classes -->
+    <script src="js/classes/parents/drawObject.class.js"></script>
+    <script src="js/classes/collectables/bottle.class.js"></script>
+    <script src="js/classes/collectables/coin.class.js"></script>
+    <script src="js/classes/enemies/enemy.class.js"></script>
+    <script src="js/classes/player/player.class.js"></script>
+    <script src="js/classes/background.class.js"></script>
+    <script src="js/singleImageLoading.js"></script>
+    <script src="js/imageCache.js"></script>
+
 </head>
 
 <body>
@@ -34,8 +49,11 @@
     </div>
 
     <div id="warning"> ROTATE SCREEN! </div>
+
     <!-- import scipt -->
     <script src="js/index.js"></script>
+    <script src="js/eventListener.js"></script>
+    <script src="js/startscreen.js"></script>
 </body>
 
 </html>
