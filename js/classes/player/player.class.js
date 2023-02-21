@@ -60,7 +60,6 @@ class Player extends DrawObject {
 			this.timestamp_Framerate = new Date().getTime();
 		}
 		if (lastPosition === "left") {
-			// ANCHOR kein plan was hier passiert
 			ctx.save();
 			ctx.scale(-1, 1);
 			ctx.drawImage(this.currentImage, this.position.x * -1 - this.width, this.position.y, this.width, this.height);
@@ -73,34 +72,46 @@ class Player extends DrawObject {
 
 	update() {
 		if (!player.playerDead) {
-			this.checkHealth();
-			this.draw();
-			this.position.y += this.velocity.y;
-			this.position.x += this.velocity.x;
-
-			// set offset
-			this.offsetX = this.position.x + this.offset.left;
-			this.offsetY = this.position.y + this.offset.top;
-			this.offsetWidth = this.width - this.offset.right - this.offset.left;
-			this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
+			this.drawPlayer();
 		} else {
 			if (this.timestamp_StopDeadAnimation + 700 <= new Date().getTime()) {
-				walkingsound.pause();
-				stopAnimation = true;
-				this.currentImage = GameOver;
-				ctx.drawImage(this.currentImage, 0, 0, canvas.width, canvas.height);
-				PressButton = true;
-				ctx.drawImage(
-					TryAgain,
-					TryAgainButtonPositionX,
-					TryAgainButtonPositionY,
-					TryAgainButtonWidth,
-					TryAgainButtonHeight
-				);
+				this.wonGame();
 			} else {
-				this.currentAnimationArray = IMAGES_DEAD;
-				this.draw();
+				this.deadPlayer();
 			}
 		}
+	}
+
+	drawPlayer() {
+		this.checkHealth();
+		this.draw();
+		this.position.y += this.velocity.y;
+		this.position.x += this.velocity.x;
+
+		// set offset
+		this.offsetX = this.position.x + this.offset.left;
+		this.offsetY = this.position.y + this.offset.top;
+		this.offsetWidth = this.width - this.offset.right - this.offset.left;
+		this.offsetHeight = this.height - this.offset.bottom - this.offset.top;
+	}
+
+	wonGame() {
+		walkingsound.pause();
+		stopAnimation = true;
+		this.currentImage = GameOver;
+		ctx.drawImage(this.currentImage, 0, 0, canvas.width, canvas.height);
+		PressButton = true;
+		ctx.drawImage(
+			TryAgain,
+			TryAgainButtonPositionX,
+			TryAgainButtonPositionY,
+			TryAgainButtonWidth,
+			TryAgainButtonHeight
+		);
+	}
+
+	deadPlayer() {
+		this.currentAnimationArray = IMAGES_DEAD;
+		this.draw();
 	}
 }

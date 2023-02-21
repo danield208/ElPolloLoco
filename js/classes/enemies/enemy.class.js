@@ -89,32 +89,75 @@ class Enemy extends DrawObject {
 	}
 
 	draw() {
+		this.imageArray_NormalChicken();
+		this.imageArray_SmallChicken();
+		this.imageArray_BossChicken();
+		if (this.type != "boss") {
+			this.setStandartValues();
+		} else {
+			this.setBossValues();
+		}
+		this.drawWalkDirection();
+	}
+
+	imageArray_NormalChicken() {
 		if (this.type === "normal") this.currentAnimationArray = IMAGES_CHICKEN_NORMAL;
+	}
+
+	imageArray_SmallChicken() {
 		if (this.type === "small") this.currentAnimationArray = IMAGES_CHICKEN_SMALL;
+	}
+
+	imageArray_BossChicken() {
 		if (this.type === "boss" && bossHealth != 0 && !bossHit) {
 			this.currentAnimationArray = IMAGES_BOSS_WALK;
 		} else if (this.type === "boss" && bossHit) {
 			this.currentAnimationArray = IMAGES_BOSS_HURT;
 		} else if (this.type === "boss" && bossHealth == 0) this.currentAnimationArray = IMAGES_BOSS_DEAD;
+	}
 
-		if (this.type != "boos") {
-			if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime() && this.status != "dead") {
-				this.playAnimation(this.currentAnimationArray);
-				this.timestamp_Framerate = new Date().getTime();
-			} else if (this.status == "dead") {
-				if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
-				if (this.type == "small") this.currentImage = IMAGES_CHICKEN_SMALL_DEAD;
-			}
-		} else {
-			if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
-				this.playAnimation(this.currentAnimationArray);
-				this.timestamp_Framerate = new Date().getTime();
-			} else if (bossHealth == 0) {
-				if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
-				if (this.type == "small") this.currentImage = IMAGES_CHICKEN_SMALL_DEAD;
-			}
+	setStandartValues() {
+		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime() && this.status != "dead") {
+			this.playAnimation(this.currentAnimationArray);
+			this.timestamp_Framerate = new Date().getTime();
+		} else if (this.status == "dead") {
+			if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
+			if (this.type == "small") this.currentImage = IMAGES_CHICKEN_SMALL_DEAD;
+		}
+	}
+
+	setBossValues() {
+		if (this.timestamp_Framerate + this.timeDelayImage < new Date().getTime()) {
+			this.playAnimation(this.currentAnimationArray);
+			this.timestamp_Framerate = new Date().getTime();
+		} else if (bossHealth == 0) {
+			if (this.type == "normal") this.currentImage = IMAGE_CHICKEN_NORMAL_DEAD;
+			if (this.type == "small") this.currentImage = IMAGES_CHICKEN_SMALL_DEAD;
 		}
 
+		this.checkForHealthStatus();
+		ctx.drawImage(this.healthStatus, this.position.x, this.position.y - 10, 200, 50);
+
+		if (wonGame && initWin) {
+			if (BossTimestamp_StopDeadAnimation + 800 <= new Date().getTime()) {
+				walkingsound.pause();
+				initWin = false;
+				stopAnimation = true;
+				globalCurrentImage = YouWin;
+				ctx.drawImage(globalCurrentImage, canvas.width / 2 - 250, canvas.height / 2 - 100, 500, 200);
+				PressButton = true;
+				ctx.drawImage(
+					TryAgain,
+					TryAgainButtonPositionX,
+					TryAgainButtonPositionY,
+					TryAgainButtonWidth,
+					TryAgainButtonHeight
+				);
+			}
+		}
+	}
+
+	drawWalkDirection() {
 		if (player.position.x > this.position.x && this.status != "dead") {
 			// ANCHOR kein plan was hier passiert
 			ctx.save();
@@ -123,29 +166,6 @@ class Enemy extends DrawObject {
 			ctx.restore();
 		} else {
 			ctx.drawImage(this.currentImage, this.position.x, this.position.y, this.width, this.height);
-		}
-
-		if (this.type == "boss") {
-			this.checkForHealthStatus();
-			ctx.drawImage(this.healthStatus, this.position.x, this.position.y - 10, 200, 50);
-
-			if (wonGame && initWin) {
-				if (BossTimestamp_StopDeadAnimation + 800 <= new Date().getTime()) {
-					walkingsound.pause();
-					initWin = false;
-					stopAnimation = true;
-					globalCurrentImage = YouWin;
-					ctx.drawImage(globalCurrentImage, canvas.width / 2 - 250, canvas.height / 2 - 100, 500, 200);
-					PressButton = true;
-					ctx.drawImage(
-						TryAgain,
-						TryAgainButtonPositionX,
-						TryAgainButtonPositionY,
-						TryAgainButtonWidth,
-						TryAgainButtonHeight
-					);
-				}
-			}
 		}
 	}
 
@@ -159,21 +179,31 @@ class Enemy extends DrawObject {
 
 	update() {
 		this.draw();
+
 		if (this.status != "dead") {
-			if (player.position.x < this.position.x) this.position.x -= this.enemySpeed;
-			else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
+			this.setCoordinates();
 		} else if (this.status == "dead") {
-			if (!this.killInit) {
-				setTimeout(() => {
-					let index = enemies.findIndex((enemy) => {
-						return enemy.id === this.id;
-					});
-					enemies.splice(index, 1);
-				}, 1000);
-			}
+			this.deleteEnemy();
 		}
 
-		// set offset
+		this.setOffset();
+	}
+
+	setCoordinates() {
+		if (player.position.x < this.position.x) this.position.x -= this.enemySpeed;
+		else if (player.position.x > this.position.x) this.position.x += this.enemySpeed;
+	}
+	deleteEnemy() {
+		if (!this.killInit) {
+			setTimeout(() => {
+				let index = enemies.findIndex((enemy) => {
+					return enemy.id === this.id;
+				});
+				enemies.splice(index, 1);
+			}, 1000);
+		}
+	}
+	setOffset() {
 		this.offsetX = this.position.x + this.offset.left;
 		this.offsetY = this.position.y + this.offset.top;
 		this.offsetWidth = this.width - this.offset.right - this.offset.left;

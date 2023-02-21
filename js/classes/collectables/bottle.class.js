@@ -35,9 +35,7 @@ class Bottle extends DrawObject {
 			x: velocityX,
 			y: velocityY,
 		};
-
 		this.currentImage = BasicBottle;
-
 		if (!thrown) this.init();
 	}
 
@@ -75,6 +73,14 @@ class Bottle extends DrawObject {
 	}
 
 	update() {
+		this.setAnimations();
+		this.setVelocity();
+		this.addGravity();
+		this.deleteAfterThrow();
+		this.setOffset();
+	}
+
+	setAnimations() {
 		if (!this.thrown) {
 			this.draw();
 		} else if (this.splash) {
@@ -85,9 +91,14 @@ class Bottle extends DrawObject {
 			this.currentAnimationArray = IMAGES_BottleThrown;
 			this.draw();
 		}
+	}
 
+	setVelocity() {
 		this.position.y += this.velocity.y;
 		this.position.x += this.velocity.x;
+	}
+
+	addGravity() {
 		if (this.position.y < canvas.height - this.height - mapOffset) {
 			this.velocity.y += gravity;
 		} else {
@@ -98,7 +109,9 @@ class Bottle extends DrawObject {
 				this.bottleDeleteInit = true;
 			}
 		}
+	}
 
+	deleteAfterThrow() {
 		if (this.thrown && this.bottleDeleteInit) {
 			if (!this.bottleDeleting) {
 				this.bottleDeleting = true;
@@ -110,8 +123,9 @@ class Bottle extends DrawObject {
 				}, 1000);
 			}
 		}
+	}
 
-		// set offset
+	setOffset() {
 		this.offsetX = this.position.x + this.offset.left;
 		this.offsetY = this.position.y + this.offset.top;
 		this.offsetWidth = this.width - this.offset.right - this.offset.left;
