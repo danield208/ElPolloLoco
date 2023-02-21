@@ -3,30 +3,45 @@ function startFirstInit() {
 }
 
 function setStartscreenOptions() {
+	tryAgainButtonAttributes();
+	StartButtonAttributes();
+	RightButtonAttributes();
+	LeftButtonAttributes();
+	UpButtonAttributes();
+	ThrowButtonAttributes();
+}
+
+function tryAgainButtonAttributes() {
 	TryAgainButtonWidth = TryAgain.width / 2;
 	TryAgainButtonHeight = TryAgain.height / 2;
 	TryAgainButtonPositionX = canvas.width / 2 - TryAgainButtonWidth / 2;
 	TryAgainButtonPositionY = canvas.height / 7 - TryAgainButtonHeight / 2;
-
+}
+function StartButtonAttributes() {
 	StartButtonWidth = StartButton.width / 2;
 	StartButtonHeight = StartButton.height / 2;
 	StartButtonPositionX = canvas.width / 2 - StartButtonWidth / 2;
 	StartButtonPositionY = canvas.height / 7 - StartButtonHeight / 2;
+}
 
-	ButtonWidth = 80;
-	ButtonHeight = 80;
-
+function RightButtonAttributes() {
 	ArrowButtonRightPositionX = 120;
-	ArrowButtonRightPositionY = canvas.height - 20 - 80;
+	ArrowButtonRightPositionY = canvas.height - 20 - ButtonHeight;
+}
 
-	ArrowButtonLeftPositionX = 30 * -1 - 80;
-	ArrowButtonLeftPositionY = canvas.height - 20 - 80;
+function LeftButtonAttributes() {
+	ArrowButtonLeftPositionX = 30 * -1 - ButtonWidth;
+	ArrowButtonLeftPositionY = canvas.height - 20 - ButtonHeight;
+}
 
+function UpButtonAttributes() {
 	ArrowButtonUPPositionX = canvas.width - 90;
-	ArrowButtonUPPositionY = canvas.height - 20 - 80;
+	ArrowButtonUPPositionY = canvas.height - 20 - ButtonHeight;
+}
 
+function ThrowButtonAttributes() {
 	BottleButtonPositionX = canvas.width - 180;
-	BottleButtonPositionY = canvas.height - 20 - 80;
+	BottleButtonPositionY = canvas.height - 20 - ButtonHeight;
 }
 
 function initStartscreen() {

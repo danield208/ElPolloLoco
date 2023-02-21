@@ -1,4 +1,16 @@
 function init() {
+	init_Variables();
+	init_Background();
+	init_Clouds();
+	init_Bottles();
+	init_Player();
+	randomChickenSpawn();
+	randomCoinSpawn();
+	setType();
+	animate();
+}
+
+function init_Variables() {
 	drawObject = new DrawObject();
 
 	PressButton = false;
@@ -17,7 +29,6 @@ function init() {
 	bossHealth = 100;
 	bottleAmount = 12;
 	timestamp_ThrownBottle = new Date().getTime();
-
 	frameRateTimeStamp = new Date().getTime();
 
 	flip = true;
@@ -32,7 +43,9 @@ function init() {
 	lastPosition = "right";
 	playerJumping = false;
 	doesObjectHitEnemy = false;
+}
 
+function init_Background() {
 	backgroundsLayer_one = [
 		new Background({ x: -canvas.width, image: bgLayer1_2 }),
 		new Background({ x: 0, image: bgLayer1_1 }),
@@ -67,7 +80,9 @@ function init() {
 		new Background({ x: canvas.width * 7, image: bgLayer3_2 }),
 	];
 	airBackground = new Background({ x: 0, image: air });
+}
 
+function init_Clouds() {
 	clouds = [
 		new Background({ x: -canvas.width, image: clouds2, type: "cloud" }),
 		new Background({ x: 0, image: clouds1, type: "cloud" }),
@@ -79,44 +94,42 @@ function init() {
 		new Background({ x: canvas.width * 6, image: clouds1, type: "cloud" }),
 		new Background({ x: canvas.width * 7, image: clouds2, type: "cloud" }),
 	];
+}
 
+function init_Bottles() {
 	for (let i = 0; i < bottleAmount; i++) {
 		bottles.push(new Bottle({}));
 	}
+}
 
+function init_Player() {
 	player = new Player();
+}
 
-	let ChickenAmount;
-	function randomChickenSpawn() {
-		ChickenAmount = Math.floor(Math.random() * 13);
-		if (ChickenAmount <= 5) {
-			randomChickenSpawn();
-			return;
-		}
-		for (let i = 0; i < ChickenAmount; i++) {
-			const chickentype = setType();
-			enemies.push(new Enemy(chickentype));
-		}
+function randomChickenSpawn() {
+	ChickenAmount = Math.floor(Math.random() * 13);
+	if (ChickenAmount <= 5) {
+		randomChickenSpawn();
+		return;
 	}
-	randomChickenSpawn();
-
-	let CoinsAmount;
-	function randomCoinSpawn() {
-		CoinsAmount = Math.floor(Math.random() * 13);
-		if (CoinsAmount <= 5) {
-			randomCoinSpawn();
-			return;
-		}
-		for (let i = 0; i < CoinsAmount; i++) {
-			coinsArray.push(new Coin());
-		}
+	for (let i = 0; i < ChickenAmount; i++) {
+		const chickentype = setType();
+		enemies.push(new Enemy(chickentype));
 	}
-	randomCoinSpawn();
+}
 
-	function setType() {
-		if (Math.random() < 0.5) return "normal";
-		else return "small";
+function randomCoinSpawn() {
+	CoinsAmount = Math.floor(Math.random() * 13);
+	if (CoinsAmount <= 5) {
+		randomCoinSpawn();
+		return;
 	}
+	for (let i = 0; i < CoinsAmount; i++) {
+		coinsArray.push(new Coin());
+	}
+}
 
-	animate();
+function setType() {
+	if (Math.random() < 0.5) return "normal";
+	else return "small";
 }

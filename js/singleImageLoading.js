@@ -40,6 +40,19 @@ let BasicBottle;
 
 function setNewImage() {
 	ImageSrcContentLoaded = true;
+	NewImage_Background();
+	NewImage_Screens();
+	NewImage_Message();
+	NewImage_Buttons();
+	NewImage_Icons();
+	NewImage_Healthbar();
+	NewImage_EnemyDead();
+
+	setImageAttributes();
+	setImageSRC();
+}
+
+function NewImage_Background() {
 	air = new Image();
 	air.onload = () => {
 		newImageContentLoaded++;
@@ -76,6 +89,9 @@ function setNewImage() {
 	clouds2.onload = () => {
 		newImageContentLoaded++;
 	};
+}
+
+function NewImage_Screens() {
 	GameOver = new Image();
 	GameOver.onload = () => {
 		newImageContentLoaded++;
@@ -84,14 +100,38 @@ function setNewImage() {
 	Startscreen.onload = () => {
 		newImageContentLoaded++;
 	};
+}
+
+function NewImage_Message() {
 	YouWin = new Image();
 	YouWin.onload = () => {
 		newImageContentLoaded++;
 	};
+}
+
+function NewImage_Buttons() {
 	StartButton = new Image();
 	StartButton.onload = () => {
 		newImageContentLoaded++;
 	};
+	TryAgain = new Image();
+	TryAgain.onload = () => {
+		newImageContentLoaded++;
+	};
+	bottleButton = new Image();
+	bottleButton.onload = () => {
+		newImageContentLoaded++;
+	};
+	arrowButton = new Image();
+	arrowButton.onload = () => {
+		newImageContentLoaded++;
+	};
+	arrowButtonUP = new Image();
+	arrowButtonUP.onload = () => {
+		newImageContentLoaded++;
+	};
+}
+function NewImage_Icons() {
 	CoinIcon = new Image();
 	CoinIcon.onload = () => {
 		newImageContentLoaded++;
@@ -100,6 +140,13 @@ function setNewImage() {
 	BottleIcon.onload = () => {
 		newImageContentLoaded++;
 	};
+	BasicBottle = new Image();
+	BasicBottle.onload = () => {
+		newImageContentLoaded++;
+	};
+}
+
+function NewImage_Healthbar() {
 	char_health_0 = new Image();
 	char_health_0.onload = () => {
 		newImageContentLoaded++;
@@ -124,6 +171,9 @@ function setNewImage() {
 	char_health_100.onload = () => {
 		newImageContentLoaded++;
 	};
+}
+
+function NewImage_EnemyDead() {
 	IMAGE_CHICKEN_NORMAL_DEAD = new Image();
 	IMAGE_CHICKEN_NORMAL_DEAD.onload = () => {
 		newImageContentLoaded++;
@@ -132,29 +182,6 @@ function setNewImage() {
 	IMAGES_CHICKEN_SMALL_DEAD.onload = () => {
 		newImageContentLoaded++;
 	};
-	BasicBottle = new Image();
-	BasicBottle.onload = () => {
-		newImageContentLoaded++;
-	};
-	TryAgain = new Image();
-	TryAgain.onload = () => {
-		newImageContentLoaded++;
-	};
-	bottleButton = new Image();
-	bottleButton.onload = () => {
-		newImageContentLoaded++;
-	};
-	arrowButton = new Image();
-	arrowButton.onload = () => {
-		newImageContentLoaded++;
-	};
-	arrowButtonUP = new Image();
-	arrowButtonUP.onload = () => {
-		newImageContentLoaded++;
-	};
-
-	setImageAttributes();
-	setImageSRC();
 }
 
 function setImageSRC() {
@@ -170,9 +197,14 @@ function setImageSRC() {
 	GameOver.src = "img/9_intro_outro_screens/GameOver.png";
 	Startscreen.src = "img/9_intro_outro_screens/Startscreen.png";
 	YouWin.src = "img/9_intro_outro_screens/YouWin.png";
+	TryAgain.src = "img/buttons/TryAgain.png";
 	StartButton.src = "img/buttons/Start.png";
+	bottleButton.src = "img/Keys/bottle.png";
+	arrowButton.src = "img/Keys/button_right.png";
+	arrowButtonUP.src = "img/Keys/button_up.png";
 	CoinIcon.src = "img/7_statusbars/3_icons/icon_coin.png";
 	BottleIcon.src = "img/7_statusbars/3_icons/icon_salsa_bottle.png";
+	BasicBottle.src = "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png";
 	char_health_0.src = "img/7_statusbars/1_statusbar/Statusbar Health/0.png";
 	char_health_20.src = "img/7_statusbars/1_statusbar/Statusbar Health/20.png";
 	char_health_40.src = "img/7_statusbars/1_statusbar/Statusbar Health/40.png";
@@ -181,11 +213,6 @@ function setImageSRC() {
 	char_health_100.src = "img/7_statusbars/1_statusbar/Statusbar Health/100.png";
 	IMAGE_CHICKEN_NORMAL_DEAD.src = "img/3_enemies_chicken/chicken_normal/2_dead/dead.png";
 	IMAGES_CHICKEN_SMALL_DEAD.src = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
-	BasicBottle.src = "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png";
-	TryAgain.src = "img/buttons/TryAgain.png";
-	bottleButton.src = "img/Keys/bottle.png";
-	arrowButton.src = "img/Keys/button_right.png";
-	arrowButtonUP.src = "img/Keys/button_up.png";
 }
 
 function setImageAttributes() {

@@ -37,6 +37,8 @@ let airBackground;
 
 // numbers
 let enemyDamage;
+let CoinsAmount;
+let ChickenAmount;
 const gravity = 1.2;
 const mapOffset = 50;
 let bottleAmount = 12;
@@ -81,8 +83,9 @@ let StartButtonHeight;
 let StartButtonPositionX;
 let StartButtonPositionY;
 
-let ButtonWidth;
-let ButtonHeight;
+// ANCHOR Touchscreen Buttons
+let ButtonWidth = 80;
+let ButtonHeight = 80;
 
 let ArrowButtonRightPositionX;
 let ArrowButtonRightPositionY;
